@@ -29,10 +29,14 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SupplierPortalRouteImport } from './routes/supplier-portal'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
 import { Route as TeamRouteImport } from './routes/team'
-import { Route as TeamWorkspaceRouteImport } from './routes/team-workspace'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as WorkspaceTeamRouteImport } from './routes/workspace-team'
+import { Route as OrdersIdRouteImport } from './routes/orders/$id'
+import { Route as QuotesIdRouteImport } from './routes/quotes/$id'
+import { Route as SuppliersIdRouteImport } from './routes/suppliers/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -134,6 +138,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SupplierPortalRoute = SupplierPortalRouteImport.update({
+  id: '/supplier-portal',
+  path: '/supplier-portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SuppliersRoute = SuppliersRouteImport.update({
   id: '/suppliers',
   path: '/suppliers',
@@ -144,15 +153,30 @@ const TeamRoute = TeamRouteImport.update({
   path: '/team',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TeamWorkspaceRoute = TeamWorkspaceRouteImport.update({
-  id: '/team-workspace',
-  path: '/team-workspace',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
   getParentRoute: () => rootRouteImport,
+} as any)
+const WorkspaceTeamRoute = WorkspaceTeamRouteImport.update({
+  id: '/workspace-team',
+  path: '/workspace-team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdersIdRoute = OrdersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => OrdersRoute,
+} as any)
+const QuotesIdRoute = QuotesIdRouteImport.update({
+  id: '/quotes/$id',
+  path: '/quotes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuppliersIdRoute = SuppliersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => SuppliersRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -170,16 +194,20 @@ export interface FileRoutesByFullPath {
   '/how-it-works': typeof HowItWorksRoute
   '/inbox': typeof InboxRoute
   '/materials': typeof MaterialsRoute
-  '/orders': typeof OrdersRoute
+  '/orders': typeof OrdersRouteWithChildren
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/projects': typeof ProjectsRoute
   '/security': typeof SecurityRoute
   '/settings': typeof SettingsRoute
-  '/suppliers': typeof SuppliersRoute
+  '/supplier-portal': typeof SupplierPortalRoute
+  '/suppliers': typeof SuppliersRouteWithChildren
   '/team': typeof TeamRoute
-  '/team-workspace': typeof TeamWorkspaceRoute
   '/terms': typeof TermsRoute
+  '/workspace-team': typeof WorkspaceTeamRoute
+  '/orders/$id': typeof OrdersIdRoute
+  '/quotes/$id': typeof QuotesIdRoute
+  '/suppliers/$id': typeof SuppliersIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -196,16 +224,20 @@ export interface FileRoutesByTo {
   '/how-it-works': typeof HowItWorksRoute
   '/inbox': typeof InboxRoute
   '/materials': typeof MaterialsRoute
-  '/orders': typeof OrdersRoute
+  '/orders': typeof OrdersRouteWithChildren
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/projects': typeof ProjectsRoute
   '/security': typeof SecurityRoute
   '/settings': typeof SettingsRoute
-  '/suppliers': typeof SuppliersRoute
+  '/supplier-portal': typeof SupplierPortalRoute
+  '/suppliers': typeof SuppliersRouteWithChildren
   '/team': typeof TeamRoute
-  '/team-workspace': typeof TeamWorkspaceRoute
   '/terms': typeof TermsRoute
+  '/workspace-team': typeof WorkspaceTeamRoute
+  '/orders/$id': typeof OrdersIdRoute
+  '/quotes/$id': typeof QuotesIdRoute
+  '/suppliers/$id': typeof SuppliersIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -223,16 +255,20 @@ export interface FileRoutesById {
   '/how-it-works': typeof HowItWorksRoute
   '/inbox': typeof InboxRoute
   '/materials': typeof MaterialsRoute
-  '/orders': typeof OrdersRoute
+  '/orders': typeof OrdersRouteWithChildren
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/projects': typeof ProjectsRoute
   '/security': typeof SecurityRoute
   '/settings': typeof SettingsRoute
-  '/suppliers': typeof SuppliersRoute
+  '/supplier-portal': typeof SupplierPortalRoute
+  '/suppliers': typeof SuppliersRouteWithChildren
   '/team': typeof TeamRoute
-  '/team-workspace': typeof TeamWorkspaceRoute
   '/terms': typeof TermsRoute
+  '/workspace-team': typeof WorkspaceTeamRoute
+  '/orders/$id': typeof OrdersIdRoute
+  '/quotes/$id': typeof QuotesIdRoute
+  '/suppliers/$id': typeof SuppliersIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -257,10 +293,14 @@ export interface FileRouteTypes {
     | '/projects'
     | '/security'
     | '/settings'
+    | '/supplier-portal'
     | '/suppliers'
     | '/team'
-    | '/team-workspace'
     | '/terms'
+    | '/workspace-team'
+    | '/orders/$id'
+    | '/quotes/$id'
+    | '/suppliers/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -283,10 +323,14 @@ export interface FileRouteTypes {
     | '/projects'
     | '/security'
     | '/settings'
+    | '/supplier-portal'
     | '/suppliers'
     | '/team'
-    | '/team-workspace'
     | '/terms'
+    | '/workspace-team'
+    | '/orders/$id'
+    | '/quotes/$id'
+    | '/suppliers/$id'
   id:
     | '__root__'
     | '/'
@@ -309,10 +353,14 @@ export interface FileRouteTypes {
     | '/projects'
     | '/security'
     | '/settings'
+    | '/supplier-portal'
     | '/suppliers'
     | '/team'
-    | '/team-workspace'
     | '/terms'
+    | '/workspace-team'
+    | '/orders/$id'
+    | '/quotes/$id'
+    | '/suppliers/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -330,16 +378,18 @@ export interface RootRouteChildren {
   HowItWorksRoute: typeof HowItWorksRoute
   InboxRoute: typeof InboxRoute
   MaterialsRoute: typeof MaterialsRoute
-  OrdersRoute: typeof OrdersRoute
+  OrdersRoute: typeof OrdersRouteWithChildren
   PlansRoute: typeof PlansRoute
   PrivacyRoute: typeof PrivacyRoute
   ProjectsRoute: typeof ProjectsRoute
   SecurityRoute: typeof SecurityRoute
   SettingsRoute: typeof SettingsRoute
-  SuppliersRoute: typeof SuppliersRoute
+  SupplierPortalRoute: typeof SupplierPortalRoute
+  SuppliersRoute: typeof SuppliersRouteWithChildren
   TeamRoute: typeof TeamRoute
-  TeamWorkspaceRoute: typeof TeamWorkspaceRoute
   TermsRoute: typeof TermsRoute
+  WorkspaceTeamRoute: typeof WorkspaceTeamRoute
+  QuotesIdRoute: typeof QuotesIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -484,6 +534,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/supplier-portal': {
+      id: '/supplier-portal'
+      path: '/supplier-portal'
+      fullPath: '/supplier-portal'
+      preLoaderRoute: typeof SupplierPortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/suppliers': {
       id: '/suppliers'
       path: '/suppliers'
@@ -498,13 +555,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/team-workspace': {
-      id: '/team-workspace'
-      path: '/team-workspace'
-      fullPath: '/team-workspace'
-      preLoaderRoute: typeof TeamWorkspaceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -512,8 +562,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/workspace-team': {
+      id: '/workspace-team'
+      path: '/workspace-team'
+      fullPath: '/workspace-team'
+      preLoaderRoute: typeof WorkspaceTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orders/$id': {
+      id: '/orders/$id'
+      path: '/$id'
+      fullPath: '/orders/$id'
+      preLoaderRoute: typeof OrdersIdRouteImport
+      parentRoute: typeof OrdersRoute
+    }
+    '/quotes/$id': {
+      id: '/quotes/$id'
+      path: '/quotes/$id'
+      fullPath: '/quotes/$id'
+      preLoaderRoute: typeof QuotesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suppliers/$id': {
+      id: '/suppliers/$id'
+      path: '/$id'
+      fullPath: '/suppliers/$id'
+      preLoaderRoute: typeof SuppliersIdRouteImport
+      parentRoute: typeof SuppliersRoute
+    }
   }
 }
+
+interface OrdersRouteChildren {
+  OrdersIdRoute: typeof OrdersIdRoute
+}
+
+const OrdersRouteChildren: OrdersRouteChildren = {
+  OrdersIdRoute: OrdersIdRoute,
+}
+
+const OrdersRouteWithChildren =
+  OrdersRoute._addFileChildren(OrdersRouteChildren)
+
+interface SuppliersRouteChildren {
+  SuppliersIdRoute: typeof SuppliersIdRoute
+}
+
+const SuppliersRouteChildren: SuppliersRouteChildren = {
+  SuppliersIdRoute: SuppliersIdRoute,
+}
+
+const SuppliersRouteWithChildren = SuppliersRoute._addFileChildren(
+  SuppliersRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -530,16 +631,18 @@ const rootRouteChildren: RootRouteChildren = {
   HowItWorksRoute: HowItWorksRoute,
   InboxRoute: InboxRoute,
   MaterialsRoute: MaterialsRoute,
-  OrdersRoute: OrdersRoute,
+  OrdersRoute: OrdersRouteWithChildren,
   PlansRoute: PlansRoute,
   PrivacyRoute: PrivacyRoute,
   ProjectsRoute: ProjectsRoute,
   SecurityRoute: SecurityRoute,
   SettingsRoute: SettingsRoute,
-  SuppliersRoute: SuppliersRoute,
+  SupplierPortalRoute: SupplierPortalRoute,
+  SuppliersRoute: SuppliersRouteWithChildren,
   TeamRoute: TeamRoute,
-  TeamWorkspaceRoute: TeamWorkspaceRoute,
   TermsRoute: TermsRoute,
+  WorkspaceTeamRoute: WorkspaceTeamRoute,
+  QuotesIdRoute: QuotesIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
