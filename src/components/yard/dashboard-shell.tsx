@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { YardMark } from "./brand";
 
 const nav = [
-  ["Overview", "/dashboard", LayoutDashboard], ["Inbox", "/inbox", Inbox], ["Live board", "/board", Archive], ["Approvals", "/approvals", FileCheck2], ["Suppliers", "/suppliers", Truck], ["Materials", "/materials", Boxes], ["Purchase orders", "/orders", PackageCheck], ["Activity", "/activity", Activity], ["Team & roles", "/team", Users],
+  ["Overview", "/dashboard", LayoutDashboard], ["Inbox", "/inbox", Inbox], ["Live board", "/board", Archive], ["Approvals", "/approvals", FileCheck2], ["Suppliers", "/suppliers", Truck], ["Materials", "/materials", Boxes], ["Purchase orders", "/orders", PackageCheck], ["Activity", "/activity", Activity], ["Team & roles", "/workspace-team", Users],
 ] as const;
 
 export function DashboardShell({ children, title, eyebrow = "OWNER WORKSPACE" }: { children: ReactNode; title: string; eyebrow?: string }) {
