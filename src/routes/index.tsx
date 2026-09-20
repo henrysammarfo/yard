@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Check, Mail, Radar, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { PublicShell } from "@/components/yard/public-shell";
 
 export const Route = createFileRoute("/")({
@@ -12,14 +12,11 @@ export const Route = createFileRoute("/")({
   ]}), component: Home,
 });
 
-const rows = [
-  ["16mm iron rods", "Aseda Steel", "GH₵ 99.50", "GH₵ 94.25", "+5.6%", "Review"],
-  ["Ghacem 42.5R", "Coastal Cement", "GH₵ 123.00", "GH₵ 126.00", "−2.4%", "Approved"],
-  ["Wawa boards", "Northline", "GH₵ 190.00", "GH₵ 177.00", "+7.3%", "Needs info"],
-];
+const ticker = ["Supplier Email", "Quote Extraction", "Market Check", "Live Board", "Team Approval"];
+function CurveLines({position}:{position:"left"|"right"|"top"}) { return <div className={`curve-lines curve-lines--${position}`} aria-hidden="true">{Array.from({length:20},(_,i)=><span className={`curve-line curve-line--${i+1}`} key={i}/>)}</div> }
 function Home() { return <PublicShell><main>
-  <section className="yard-hero"><div className="yard-hero__grid" aria-hidden="true"/><div className="yard-hero__copy"><span className="eyebrow"><i/>LIVE PROCUREMENT FOR ACCRA YARDS</span><h1>Know what to buy.<br/><em>Before you buy it.</em></h1><p>Supplier emails become clean quotes, checked against today’s public prices and ready for your team to approve.</p><div className="hero-actions"><Link to="/dashboard" className="button button--dark">Open live board <ArrowRight/></Link><Link to="/how-it-works" className="button button--light">See how it works</Link></div></div>
-    <div className="hero-product"><div className="product-top"><span><i/> YARD LIVE BOARD</span><small>DEMO DATA · ACCRA</small></div><div className="product-flow"><div><Mail/><span>QUOTE EMAIL</span><b>09:42</b></div><ArrowRight/><div><Radar/><span>MARKET CHECK</span><b>3 sources</b></div><ArrowRight/><div><ShieldCheck/><span>DECISION</span><b>Ready</b></div></div><div className="mini-table"><div className="mini-table__head"><span>MATERIAL</span><span>SUPPLIER</span><span>QUOTED</span><span>MARKET</span><span>VARIANCE</span><span>STATUS</span></div>{rows.map((r)=><div className="mini-table__row" key={r[0]}>{r.map((c,i)=><span key={c} className={i===5?`mini-status s${r[5].replace(' ','').toLowerCase()}`:''}>{c}</span>)}</div>)}</div></div>
+  <section className="hero yard-template-hero"><CurveLines position="left"/><CurveLines position="right"/><CurveLines position="top"/><div className="hero__content"><div className="service-ticker" aria-label="YARD workflow"><div className="service-ticker__track">{Array.from({length:4},()=>ticker).flat().map((item,i)=><span className="service-ticker__item" key={`${item}-${i}`}>{item}</span>)}</div></div><h1 className="hero__title">Live procurement <span className="hero__serif">alwayzz</span><sup>®</sup> in control.</h1><p className="hero__subtitle">Your suppliers email the yard. YARD reads the inbox, checks today’s public prices, and shows your team what to buy — live.</p><div className="hero__actions"><Link className="primary-cta" to="/dashboard">Open Live Board</Link><Link className="book-cta" to="/contact"><span className="yard-avatar">HM</span><span className="book-cta__copy"><strong>Chat for 15 minutes</strong><span className="book-cta__slot"><i/>Pick a slot</span></span></Link></div></div><div className="hero__blur" aria-hidden="true"/></section>
+  <section className="trusted"><div className="trusted__inner"><p className="trusted__label">The complete quote-to-decision loop</p><div className="partner-marquee"><div className="partner-marquee__track">{[...ticker,...ticker,...ticker,...ticker].map((x,i)=><span className="partner-logo" key={`${x}-${i}`}>{x}</span>)}</div></div></div></section>
   </section>
   <section className="signal-strip">{["MAIL RECEIVED", "LINE ITEMS EXTRACTED", "PUBLIC PRICES CHECKED", "TEAM APPROVAL", "CONFIRMATION SENT"].map((x,i)=><span key={x}><b>{String(i+1).padStart(2,'0')}</b>{x}</span>)}</section>
   <section className="home-statement"><span className="eyebrow">ONE LIVE BUYING SYSTEM</span><h2>Not another CRM.<br/>Your yard’s <em>decision layer.</em></h2><div className="statement-copy"><p>Every quote stays tied to its source email, current public evidence, assignee, and final decision.</p><Link to="/projects">Explore the workflows <ArrowRight/></Link></div></section>
