@@ -46,10 +46,16 @@ export const markRefreshFailed = internalMutation({
   handler: async (ctx, { materialId, reason }) => {
     const material = await ctx.db.get(materialId);
     if (!material) return;
+    const friendly =
+      /no unit_price|not extracted|extract/i.test(reason)
+        ? "Could not read a clear unit price from that page. Check the URL shows a price, then tap Re-check."
+        : /no pageurl/i.test(reason)
+          ? "Add a public page URL on this material, then tap Re-check."
+          : reason;
     await logActivity(ctx, {
       orgId: material.orgId,
       title: `Market refresh failed: ${material.name}`,
-      detail: reason,
+      detail: friendly,
       type: "crawl",
     });
   },

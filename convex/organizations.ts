@@ -136,22 +136,24 @@ export const updateSettings = mutation({
   },
   handler: async (ctx, args) => {
     await requireMembership(ctx, args.orgId, ["owner"]);
+    const notifyEmail = args.notifyEmail?.trim() || undefined;
+    const defaultAssignee = args.defaultAssignee?.trim() || undefined;
     const existing = await ctx.db
       .query("orgSettings")
       .withIndex("by_org", (q) => q.eq("orgId", args.orgId))
       .unique();
     if (existing) {
       await ctx.db.patch(existing._id, {
-        notifyEmail: args.notifyEmail,
-        defaultAssignee: args.defaultAssignee,
+        notifyEmail: notifyEmail ?? "",
+        defaultAssignee: defaultAssignee ?? "",
         updatedAt: Date.now(),
       });
       return existing._id;
     }
     return await ctx.db.insert("orgSettings", {
       orgId: args.orgId,
-      notifyEmail: args.notifyEmail,
-      defaultAssignee: args.defaultAssignee,
+      notifyEmail: notifyEmail ?? "",
+      defaultAssignee: defaultAssignee ?? "",
       updatedAt: Date.now(),
     });
   },
@@ -161,9 +163,16 @@ export const getSettings = query({
   args: { orgId: v.id("organizations") },
   handler: async (ctx, { orgId }) => {
     await requireMembership(ctx, orgId, ["owner"]);
-    return await ctx.db
+    const settings = await ctx.db
       .query("orgSettings")
       .withIndex("by_org", (q) => q.eq("orgId", orgId))
       .unique();
+    const org = await ctx.db.get(orgId);
+    return {
+      notifyEmail: settings?.notifyEmail ?? "",
+      defaultAssignee: settings?.defaultAssignee ?? "",
+      inboxId: org?.inboxId ?? "",
+      orgName: org?.name ?? "",
+    };
   },
 });

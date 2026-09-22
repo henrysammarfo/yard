@@ -57,8 +57,8 @@ export const upsert = mutation({
       await ctx.db.patch(existing._id, {
         name: args.name,
         category: args.category,
-        website: args.website,
-        email: args.email,
+        ...(args.website !== undefined ? { website: args.website } : {}),
+        ...(args.email !== undefined ? { email: args.email } : {}),
       });
       return existing._id;
     }
@@ -67,8 +67,8 @@ export const upsert = mutation({
       name: args.name,
       slug,
       category: args.category,
-      website: args.website,
-      email: args.email,
+      ...(args.website ? { website: args.website } : {}),
+      ...(args.email ? { email: args.email } : {}),
       score: 80,
       quoteCount: 0,
       winRate: "—",
@@ -100,16 +100,29 @@ export const upsertMaterial = mutation({
   },
   handler: async (ctx, args) => {
     await requireMembership(ctx, args.orgId, ["owner", "staff", "buyer"]);
-    return await ctx.db.insert("materials", {
+    const pageUrl = args.pageUrl?.trim() || undefined;
+    const materialId = await ctx.db.insert("materials", {
       orgId: args.orgId,
-      name: args.name,
-      category: args.category,
-      unit: args.unit,
-      pageUrl: args.pageUrl,
-      sourceLabel: args.pageUrl ? "1 source" : "unlinked",
+      name: args.name.trim(),
+      category: args.category.trim() || "General",
+      unit: args.unit.trim() || "unit",
+      ...(pageUrl ? { pageUrl } : {}),
+      sourceLabel: pageUrl ? "1 source" : "unlinked",
       changeLabel: "—",
-      direction: "flat",
+      direction: "flat" as const,
     });
+    if (pageUrl) {
+      await logActivity(ctx, {
+        orgId: args.orgId,
+        title: `Market refresh: ${args.name.trim()}`,
+        detail: "Firecrawl check queued for this material’s public page.",
+        type: "crawl",
+      });
+      await ctx.scheduler.runAfter(0, internal.materialsAction.refresh, {
+        materialId,
+      });
+    }
+    return materialId;
   },
 });
 

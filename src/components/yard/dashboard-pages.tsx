@@ -20,7 +20,7 @@ import {
   TrendingDown,
   X,
 } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { api } from "../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { roleProfiles, toMutationStatus, useSession, type UiQuote } from "@/lib/yard-session";
@@ -36,17 +36,32 @@ function friendlyError(msg: string): string {
   if (/Cannot read properties|undefined \(reading/i.test(msg)) {
     return "Something failed while drafting or sending the counter. Retry from a new inbound quote.";
   }
+  if (/no unit_price|not extracted|Could not read a clear unit price/i.test(msg)) {
+    return "Could not read a clear unit price from that page. Check the URL shows a price, then tap Re-check.";
+  }
+  if (/no pageurl/i.test(msg)) {
+    return "Add a public page URL on this material, then tap Re-check.";
+  }
   return msg;
 }
 
-function QuoteTable({ data }: { data: UiQuote[] }) {
+function QuoteTable({
+  data,
+  empty,
+}: {
+  data: UiQuote[];
+  empty?: { title: string; body: string; action?: { to: "/settings" | "/inbox" | "/materials" | "/board"; label: string } };
+}) {
   if (data.length === 0) {
     return (
       <EmptyState
         icon={Search}
-        title="No quotes in this view"
-        body="Clear the search or pick another filter. New AgentMail quotes appear here live."
-        action={{ to: "/settings", label: "Check inbox setup" }}
+        title={empty?.title ?? "No quotes in this view"}
+        body={
+          empty?.body ??
+          "Clear the search or pick another filter. New AgentMail quotes appear here live."
+        }
+        action={empty?.action ?? { to: "/settings", label: "Set up your inbox" }}
       />
     );
   }
@@ -166,8 +181,8 @@ export function DashboardPage() {
             <EmptyState
               icon={Inbox}
               title="Nothing waiting yet"
-              body="When a supplier emails a quote, it lands here for review. Configure AgentMail in Settings to go live."
-              action={{ to: "/settings", label: "Open Settings" }}
+              body="Each organisation sets up its own AgentMail inbox in Settings. When a supplier emails a quote, it lands here for your team only."
+              action={{ to: "/settings", label: "Set up your workspace" }}
             />
           ) : (
             <QuoteTable data={review.slice(0, 3)} />
@@ -245,7 +260,22 @@ export function BoardPage() {
           ))}
         </div>
       </div>
-      <QuoteTable data={data} />
+      <QuoteTable
+        data={data}
+        empty={
+          quotes.length === 0
+            ? {
+                title: "Board is empty for this organisation",
+                body: "Link your AgentMail inbox in Settings, or submit a test quote from the supplier portal. Quotes stay inside your org only.",
+                action: { to: "/settings", label: "Set up your inbox" },
+              }
+            : {
+                title: "No quotes match this filter",
+                body: "Clear search or pick All to see every quote in your workspace.",
+                action: { to: "/inbox", label: "Open Inbox" },
+              }
+        }
+      />
     </DashboardShell>
   );
 }
@@ -260,8 +290,8 @@ export function InboxPage() {
         <EmptyState
           icon={Mail}
           title="Waiting for supplier mail"
-          body="Point AgentMail at this workspace in Settings. Inbound webhooks create live quote rows the moment a supplier emails you."
-          action={{ to: "/settings", label: "Configure AgentMail" }}
+          body="Point AgentMail at this organisation in Settings (Inbox tab). Inbound mail creates quote rows for your workspace only — not shared with other accounts."
+          action={{ to: "/settings", label: "Set up your inbox" }}
         />
       ) : (
         <div className="inbox-layout">
@@ -344,8 +374,8 @@ export function ApprovalsPage() {
           <EmptyState
             icon={Check}
             title="Queue clear"
-            body="Every quote has a decision. New supplier mail lands here automatically."
-            action={{ to: "/inbox", label: "Go to Inbox" }}
+            body="No quotes need a decision right now. New supplier mail for this organisation will show up here automatically."
+            action={{ to: "/inbox", label: "Open Inbox" }}
           />
         ) : (
           <div className="approval-list">
@@ -424,13 +454,78 @@ export function ApprovalsPage() {
 }
 
 export function SuppliersPage() {
+  const session = useSession();
   const { suppliers } = useYard();
+  const upsertSupplier = useMutation(api.catalog.upsert);
   const [query, setQuery] = useState("");
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const data = suppliers.filter((s) =>
     (s.name + s.category).toLowerCase().includes(query.toLowerCase()),
   );
   return (
     <DashboardShell title="Suppliers" eyebrow="NETWORK">
+      <section className="dash-panel" style={{ marginBottom: 16 }}>
+        <div className="panel-head">
+          <div>
+            <span>ADD SUPPLIER</span>
+            <h2>Save a supplier for this organisation</h2>
+          </div>
+        </div>
+        <form
+          className="contact-form"
+          onSubmit={(e: FormEvent<HTMLFormElement>) => {
+            e.preventDefault();
+            if (!session?.orgId) return;
+            const form = e.currentTarget;
+            const fd = new FormData(form);
+            setError(null);
+            setSaved(false);
+            void upsertSupplier({
+              orgId: session.orgId,
+              name: String(fd.get("name") ?? "").trim(),
+              category: String(fd.get("category") ?? "General").trim() || "General",
+              ...(String(fd.get("website") ?? "").trim()
+                ? { website: String(fd.get("website") ?? "").trim() }
+                : {}),
+              ...(String(fd.get("email") ?? "").trim()
+                ? { email: String(fd.get("email") ?? "").trim() }
+                : {}),
+            })
+              .then(() => {
+                setSaved(true);
+                form.reset();
+              })
+              .catch((err: Error) => setError(err.message));
+          }}
+        >
+          <label>
+            Supplier name
+            <input name="name" required placeholder="Accra Building Supplies" />
+          </label>
+          <label>
+            Category
+            <input name="category" defaultValue="Building materials" placeholder="e.g. Cement, timber" />
+          </label>
+          <label>
+            Public website (optional)
+            <input name="website" type="url" placeholder="https://…" />
+          </label>
+          <label>
+            Quote email (optional)
+            <input name="email" type="email" placeholder="sales@supplier.com" />
+          </label>
+          <Button type="submit">
+            <Plus /> Add supplier
+          </Button>
+          {saved && (
+            <p className="saved-note">
+              <Check /> Supplier saved to your organisation.
+            </p>
+          )}
+          {error && <p className="form-error">{error}</p>}
+        </form>
+      </section>
       <div className="toolbar">
         <label>
           <Search />
@@ -445,8 +540,8 @@ export function SuppliersPage() {
         <EmptyState
           icon={Search}
           title="No suppliers yet"
-          body="Suppliers appear as quotes arrive. You can also add them from an owner workflow once mail is flowing."
-          action={{ to: "/inbox", label: "Open Inbox" }}
+          body="Add a supplier above, or wait for the first quote email — suppliers also appear when mail arrives."
+          action={{ to: "/settings", label: "Set up your inbox" }}
         />
       ) : (
         <div className="supplier-grid">
@@ -496,9 +591,14 @@ export function MaterialsPage() {
         <div className="panel-head">
           <div>
             <span>TRACK MATERIAL</span>
-            <h2>Add a public page for Firecrawl</h2>
+            <h2>Add a product page for Firecrawl to read</h2>
           </div>
         </div>
+        <p className="help-copy" style={{ marginBottom: 12 }}>
+          Fill the product name, what kind of goods it is, the unit you buy in (bag, tonne, m³), and
+          the public page URL that shows the price. We save it to your organisation, then Firecrawl
+          tries to pull the unit price automatically.
+        </p>
         <form
           className="contact-form"
           onSubmit={(e: FormEvent<HTMLFormElement>) => {
@@ -508,12 +608,13 @@ export function MaterialsPage() {
             const fd = new FormData(form);
             setError(null);
             setSaved(false);
+            const pageUrl = String(fd.get("url") ?? "").trim();
             void upsertMaterial({
               orgId: session.orgId,
               name: String(fd.get("name") ?? ""),
               category: String(fd.get("category") ?? "General"),
               unit: String(fd.get("unit") ?? "unit"),
-              pageUrl: String(fd.get("url") ?? "") || undefined,
+              ...(pageUrl ? { pageUrl } : {}),
             })
               .then(() => {
                 setSaved(true);
@@ -523,27 +624,28 @@ export function MaterialsPage() {
           }}
         >
           <label>
-            Material name
-            <input name="name" required placeholder="Cement 42.5R" />
+            Product name
+            <input name="name" required placeholder="e.g. Cement 42.5R" />
           </label>
           <label>
             Category
-            <input name="category" defaultValue="Aggregates" />
+            <input name="category" defaultValue="Aggregates" placeholder="e.g. Aggregates, Timber" />
           </label>
           <label>
-            Unit
-            <input name="unit" defaultValue="bag" />
+            Buy unit
+            <input name="unit" defaultValue="bag" placeholder="bag, tonne, m³…" />
           </label>
           <label>
-            Public page URL
-            <input name="url" type="url" placeholder="https://…" />
+            Public page URL (required for price check)
+            <input name="url" type="url" placeholder="https://supplier.com/product/…" />
           </label>
           <Button type="submit">
-            <Plus /> Add material
+            <Plus /> Add &amp; check price
           </Button>
           {saved && (
             <p className="saved-note">
-              <Check /> Material saved — use Re-check to refresh the page price.
+              <Check /> Saved. If you added a URL, a Firecrawl check is already running — watch
+              Activity for the result.
             </p>
           )}
           {error && <p className="form-error">{error}</p>}
@@ -553,7 +655,7 @@ export function MaterialsPage() {
         <EmptyState
           icon={RefreshCw}
           title="No tracked materials yet"
-          body="Add a material above with a public page URL so Firecrawl can check live unit prices."
+          body="Add a product above with a public page URL so Firecrawl can check the live unit price for your organisation."
         />
       ) : (
         <div className="market-grid">
@@ -564,8 +666,8 @@ export function MaterialsPage() {
                 <small>{m.freshness === "—" ? "Not checked yet" : `${m.freshness} ago`}</small>
               </div>
               <h2>{m.name}</h2>
-              <strong>{m.price}</strong>
-              <p>{m.unit}</p>
+              <strong>{m.price === "—" ? "No price yet" : money(Number(m.price))}</strong>
+              <p>per {m.unit}</p>
               <div className={m.direction === "up" ? "variance-up" : "variance-down"}>
                 {m.direction === "up" ? <ArrowUpRight /> : <ArrowDownRight />}
                 {m.change}
@@ -577,7 +679,7 @@ export function MaterialsPage() {
                   void actions.refreshMarket(m.materialId).then(() => setRefreshed(m.materialId));
                 }}
               >
-                <RefreshCw /> {refreshed === m.materialId ? "Refresh queued" : "Re-check price"}
+                <RefreshCw /> {refreshed === m.materialId ? "Check running…" : "Re-check price"}
               </Button>
             </article>
           ))}
@@ -605,8 +707,8 @@ export function OrdersPage() {
           <EmptyState
             icon={PackageCheck}
             title="No purchase orders yet"
-            body="Approve a matched or reviewed quote to create a purchase order."
-            action={{ to: "/approvals", label: "Review quotes" }}
+            body="Approve a quote on Approvals or the live board. That creates a purchase order for this organisation."
+            action={{ to: "/board", label: "Open live board" }}
           />
         ) : (
           <div className="order-list">
@@ -642,8 +744,8 @@ export function ActivityPage() {
           <EmptyState
             icon={Activity}
             title="No events yet"
-            body="Mail, crawl, and approval events append here in order as the live loop runs."
-            action={{ to: "/settings", label: "Check integrations" }}
+            body="Mail, price checks, and approvals for this organisation show up here in order. Nothing is shared with other accounts."
+            action={{ to: "/settings", label: "Set up your workspace" }}
           />
         )}
         {activity.map((a, i) => (
@@ -678,9 +780,13 @@ export function TeamDashboardPage() {
         <div className="panel-head">
           <div>
             <span>MEMBERS</span>
-            <h2>{members?.length ?? 0} members</h2>
+            <h2>{members?.length ?? 0} members in this organisation</h2>
           </div>
         </div>
+        <p className="help-copy" style={{ marginBottom: 12 }}>
+          You signed up into your own organisation. Invite people who already created a YARD
+          account — they join this yard only, not anyone else’s.
+        </p>
         {(members ?? []).map((m) => (
           <article key={m._id}>
             <b>{m.name.slice(0, 2).toUpperCase()}</b>
@@ -691,6 +797,9 @@ export function TeamDashboardPage() {
             <Status tone="active">{roleProfiles[m.role].label}</Status>
           </article>
         ))}
+        {members !== undefined && members.length === 0 && (
+          <p className="empty-inline">No members loaded yet. Try refreshing — you should see yourself as Owner.</p>
+        )}
         <form
           className="invite-row"
           onSubmit={(e: FormEvent) => {
@@ -734,17 +843,38 @@ const settingsTabs = ["Yard profile", "Inbox", "Integrations"] as const;
 
 export function SettingsPage() {
   const session = useSession();
+  const canOwn = !!session?.orgId && session.role === "owner";
   const health = useQuery(
     api.materials.integrationHealth,
-    session?.orgId && session.role === "owner" ? { orgId: session.orgId } : "skip",
+    canOwn ? { orgId: session.orgId } : "skip",
+  );
+  const savedSettings = useQuery(
+    api.organizations.getSettings,
+    canOwn ? { orgId: session.orgId } : "skip",
   );
   const setInbox = useMutation(api.organizations.setInboxId);
   const updateSettings = useMutation(api.organizations.updateSettings);
   const [tab, setTab] = useState<(typeof settingsTabs)[number]>("Yard profile");
   const [saved, setSaved] = useState(false);
+  const [notifyEmail, setNotifyEmail] = useState("");
+  const [assignee, setAssignee] = useState("");
   const [inboxId, setInboxId] = useState("");
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    if (!canOwn || savedSettings === undefined) return;
+    setNotifyEmail(savedSettings.notifyEmail);
+    setAssignee(savedSettings.defaultAssignee);
+    setInboxId(savedSettings.inboxId);
+    setHydrated(true);
+  }, [canOwn, savedSettings]);
+
   return (
     <DashboardShell title="Settings" eyebrow="WORKSPACE">
+      <p className="help-copy" style={{ marginBottom: 16 }}>
+        These settings belong to <strong>{session?.org ?? "your organisation"}</strong> only. Every
+        account configures its own inbox and profile — judges do not share yours.
+      </p>
       <div className="settings-layout">
         <nav>
           {settingsTabs.map((t) => (
@@ -763,36 +893,49 @@ export function SettingsPage() {
         </nav>
         <section>
           <span>{tab.toUpperCase()}</span>
+          {!hydrated && canOwn && <p className="loading-note">Loading your saved settings…</p>}
           {tab === "Yard profile" && (
             <form
               onSubmit={(e: FormEvent) => {
                 e.preventDefault();
                 if (!session?.orgId) return;
-                const fd = new FormData(e.currentTarget);
                 void updateSettings({
                   orgId: session.orgId,
-                  notifyEmail: String(fd.get("notify") ?? ""),
-                  defaultAssignee: String(fd.get("assignee") ?? ""),
+                  notifyEmail,
+                  defaultAssignee: assignee,
                 }).then(() => setSaved(true));
               }}
             >
               <h2>Workspace details</h2>
               <label>
                 Yard name
-                <input defaultValue={session?.org ?? ""} readOnly />
+                <input value={session?.org ?? ""} readOnly />
               </label>
               <label>
                 Notify email
-                <input name="notify" type="email" placeholder="ops@company.com" />
+                <input
+                  name="notify"
+                  type="email"
+                  value={notifyEmail}
+                  onChange={(e) => setNotifyEmail(e.target.value)}
+                  placeholder="ops@company.com"
+                />
               </label>
               <label>
                 Default assignee
-                <input name="assignee" placeholder="Ama" />
+                <input
+                  name="assignee"
+                  value={assignee}
+                  onChange={(e) => setAssignee(e.target.value)}
+                  placeholder="Ama"
+                />
               </label>
-              <Button type="submit">Save changes</Button>
+              <Button type="submit" disabled={!hydrated}>
+                Save changes
+              </Button>
               {saved && (
                 <p className="saved-note">
-                  <Check /> Saved to Convex.
+                  <Check /> Saved. Leave and come back — these fields stay filled.
                 </p>
               )}
             </form>
@@ -805,7 +948,11 @@ export function SettingsPage() {
                 void setInbox({ orgId: session.orgId, inboxId }).then(() => setSaved(true));
               }}
             >
-              <h2>AgentMail inbox</h2>
+              <h2>AgentMail inbox for this organisation</h2>
+              <p className="help-copy">
+                Paste the AgentMail inbox id that should feed <em>this</em> yard. Other accounts use
+                their own ids.
+              </p>
               <label>
                 Inbox ID
                 <input
@@ -815,11 +962,15 @@ export function SettingsPage() {
                   required
                 />
               </label>
-              <p className="help-copy">Webhook path: /agentmail/webhook on your Convex site URL.</p>
-              <Button type="submit">Save inbox</Button>
+              <p className="help-copy">
+                Webhook path: /agentmail/webhook on https://brainy-horse-649.convex.site
+              </p>
+              <Button type="submit" disabled={!hydrated}>
+                Save inbox
+              </Button>
               {saved && (
                 <p className="saved-note">
-                  <Check /> Inbox linked.
+                  <Check /> Inbox linked to your organisation.
                 </p>
               )}
             </form>
@@ -827,17 +978,29 @@ export function SettingsPage() {
           {tab === "Integrations" && (
             <div className="integration-list">
               <h2>Integration status</h2>
+              <p className="help-copy">
+                API keys live on the Convex deployment. Your org still needs its own inbox id under
+                the Inbox tab.
+              </p>
               <div>
                 <i />
                 <span>
                   <strong>AgentMail</strong>
                   <small>
                     {health?.agentmail.configured ? "API key present" : "API key missing"} · inbox{" "}
-                    {health?.agentmail.inboxId ?? "not linked"}
+                    {health?.agentmail.inboxId || inboxId || "not linked yet"}
                   </small>
                 </span>
-                <Status tone={health?.agentmail.configured ? "ready" : "review"}>
-                  {health?.agentmail.configured ? "Configured" : "Needs key"}
+                <Status
+                  tone={
+                    health?.agentmail.configured && (health.agentmail.inboxId || inboxId)
+                      ? "ready"
+                      : "review"
+                  }
+                >
+                  {health?.agentmail.configured && (health.agentmail.inboxId || inboxId)
+                    ? "Ready"
+                    : "Needs inbox"}
                 </Status>
               </div>
               <div>
