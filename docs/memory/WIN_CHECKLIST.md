@@ -11,4 +11,4 @@
 - [x] Live `https://brainy-horse-649.convex.site`
 - [x] Public GitHub repo
 - [x] ≤3 min video + social tags
-- [ ] Submit on vibeapps.dev before deadline
+- [ ] Submit on vibeapps.dev (form copy ready in `docs/SUBMISSION_FORM.md`)
