@@ -157,7 +157,7 @@ function Shell({
             >
               <Menu />
             </Button>
-            <div>
+            <div className="workspace-title__copy">
               <span>{eyebrow}</span>
               <h1>{title}</h1>
             </div>

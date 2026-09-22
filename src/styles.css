@@ -766,3 +766,194 @@ a {
 .evidence>div{display:grid;gap:6px;grid-template-columns:1fr auto;align-items:start}
 .evidence>div small{grid-column:1/-1;color:var(--yard-muted)}
 .board-table{min-height:auto}
+
+/* === Quote detail + materials UX === */
+.price-compare{
+  display:grid !important;
+  grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+  margin:28px 0;
+  border:1px solid var(--yard-line);
+}
+.price-compare>div{
+  padding:18px 16px;
+  border-right:1px solid var(--yard-line);
+  min-width:0;
+}
+.price-compare>div:last-child{border-right:0}
+.price-compare span{
+  display:block;
+  margin-bottom:8px;
+  color:var(--yard-muted);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.04em;
+}
+.price-compare strong{
+  display:block;
+  font-family:var(--yard-font-display, "Bebas Neue", sans-serif);
+  font-size:clamp(28px, 3vw, 40px);
+  font-weight:400;
+  line-height:1;
+}
+.price-compare small{
+  display:block;
+  margin-top:8px;
+  color:var(--yard-muted);
+  font-size:12px;
+  overflow-wrap:anywhere;
+}
+.evidence{margin-top:8px}
+.evidence h3{margin:0 0 12px;font-size:14px}
+.evidence__row{
+  display:grid !important;
+  grid-template-columns:minmax(0, 1fr) auto !important;
+  gap:8px 16px !important;
+  padding:14px 0 !important;
+  border-bottom:1px solid var(--yard-line);
+  align-items:start;
+}
+.evidence__price{
+  font-size:18px;
+  white-space:nowrap;
+}
+.evidence__meta{
+  grid-column:1 / -1;
+  color:var(--yard-muted);
+  font-size:12px;
+}
+.evidence__counter{
+  margin:14px 0 0;
+  padding:12px 14px;
+  background:var(--yard-soft, #efefeb);
+  border:1px solid var(--yard-line);
+  font-size:14px;
+  line-height:1.45;
+  white-space:pre-wrap;
+}
+.quote-side__block{
+  display:grid;
+  gap:6px;
+  margin-bottom:20px;
+}
+.quote-side__label{
+  display:block;
+  color:var(--yard-muted);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.quote-side__value{
+  display:block;
+  font-size:20px;
+  line-height:1.2;
+}
+.assign-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:4px;
+}
+.assign-row button{
+  width:auto !important;
+  margin:0 !important;
+  padding:8px 12px;
+  border:1px solid var(--yard-line);
+  background:#fff;
+  font:inherit;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+}
+.assign-row button.is-active{
+  background:var(--yard-ink);
+  color:#fff;
+  border-color:var(--yard-ink);
+}
+.quote-actions{
+  display:grid;
+  gap:8px;
+  margin-top:8px;
+}
+.quote-actions .button,
+.quote-actions button{
+  width:100%;
+  justify-content:center;
+}
+.dash-panel .empty-state{
+  min-height:220px;
+  padding:20px;
+}
+.empty-state{
+  min-height:min(380px, calc(100vh - 220px));
+}
+.workspace-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.workspace-title__copy{
+  display:grid;
+  gap:4px;
+  min-width:0;
+}
+.workspace-title__copy span{
+  color:var(--yard-muted);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.08em;
+}
+.workspace-title__copy h1{
+  margin:0;
+  font-size:clamp(26px, 2.4vw, 34px);
+  line-height:1.15;
+}
+.market-grid>article{
+  display:grid;
+  gap:8px;
+  align-content:start;
+  min-height:0;
+  padding:18px !important;
+}
+.market-grid>article>strong{
+  margin:4px 0;
+  line-height:1;
+}
+.market-grid footer{
+  margin-top:4px;
+  color:var(--yard-muted);
+  font-size:12px;
+}
+.parsed-box strong{
+  display:block;
+  margin-top:8px;
+  font-family:var(--yard-font-display, "Bebas Neue", sans-serif);
+  font-size:36px;
+  font-weight:400;
+}
+.contact-form{
+  display:grid;
+  gap:12px;
+  max-width:720px;
+}
+.contact-form label{
+  display:grid;
+  gap:6px;
+  font-size:13px;
+  font-weight:600;
+}
+.saved-note{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin:0;
+  color:var(--yard-positive, #1a7f4b);
+  font-size:13px;
+  font-weight:600;
+}
+@media (max-width:900px){
+  .price-compare{grid-template-columns:1fr !important}
+  .price-compare>div{border-right:0;border-bottom:1px solid var(--yard-line)}
+  .price-compare>div:last-child{border-bottom:0}
+}

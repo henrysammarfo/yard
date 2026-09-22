@@ -107,6 +107,7 @@ export type UiQuote = {
   received: string;
   fresh: string;
   status: string;
+  rawStatus: Doc<"quotes">["status"];
   assignee: string;
   confidence: number;
   pageUrl?: string;
@@ -131,6 +132,7 @@ export function mapQuote(q: Doc<"quotes">): UiQuote {
     received: relative(q.receivedAt),
     fresh: q.checkedAt ? relative(q.checkedAt) : "—",
     status: displayStatus(q.status),
+    rawStatus: q.status,
     assignee: q.assignee ?? "Unassigned",
     confidence: q.confidence,
     pageUrl: q.pageUrl,

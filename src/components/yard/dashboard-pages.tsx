@@ -32,6 +32,13 @@ const money = (n: number) =>
   Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—";
 const variance = (q: UiQuote) => (q.market > 0 ? ((q.quoted - q.market) / q.market) * 100 : 0);
 
+function friendlyError(msg: string): string {
+  if (/Cannot read properties|undefined \(reading/i.test(msg)) {
+    return "Something failed while drafting or sending the counter. Retry from a new inbound quote.";
+  }
+  return msg;
+}
+
 function QuoteTable({ data }: { data: UiQuote[] }) {
   if (data.length === 0) {
     return (
@@ -105,8 +112,13 @@ export function DashboardPage() {
   const { quotes, orders, activity, ready } = useYard();
   const session = useSession();
   const review = quotes.filter((q) => q.status === "Review" || q.status === "Needs info");
-  const approved = quotes.filter((q) => q.status === "Approved");
-  const saved = approved.reduce((sum, q) => sum + Math.max(0, q.quoted - q.market), 0);
+  const ordered = quotes.filter((q) => q.rawStatus === "approved");
+  const high = quotes.filter((q) => q.market > 0 && q.quoted > q.market);
+  const exposure = high.reduce((sum, q) => sum + (q.quoted - q.market), 0);
+  const approvedValue = orders.reduce((sum, o) => {
+    const n = Number(String(o.total).replace(/[^0-9.-]/g, ""));
+    return sum + (Number.isFinite(n) ? n : 0);
+  }, 0);
   return (
     <DashboardShell
       title={`Good morning, ${session?.name.split(" ")[0] ?? "team"}.`}
@@ -122,20 +134,20 @@ export function DashboardPage() {
         />
         <Metric
           label="Approved value"
-          value={money(approved.reduce((s, q) => s + q.quoted, 0))}
+          value={money(approvedValue || ordered.reduce((s, q) => s + q.quoted, 0))}
           note={`Across ${orders.length} purchase orders`}
           icon={CircleDollarSign}
         />
         <Metric
           label="High-quote exposure"
-          value={money(saved)}
+          value={money(exposure)}
           note="Quoted above the public page price"
           icon={TrendingDown}
         />
         <Metric
           label="Live updates"
           value="On"
-          note="Convex realtime — not browser storage"
+          note="Realtime workspace sync is active"
           icon={Clock3}
         />
       </div>
@@ -175,7 +187,7 @@ export function DashboardPage() {
                 <time>{a.time}</time>
                 <span>
                   <strong>{a.title}</strong>
-                  <small>{a.detail}</small>
+                  <small>{friendlyError(a.detail)}</small>
                 </span>
               </div>
             ))}
@@ -297,7 +309,7 @@ export function InboxPage() {
                 <p>
                   {selected.specification} · {selected.quantity}
                 </p>
-                <strong>{money(selected.quoted)}</strong>
+                <strong>{money(selected.quoted)} / unit</strong>
               </div>
               <Link className="button button--dark" to="/quotes/$id" params={{ id: selected.id }}>
                 Open quote <ArrowRight />
@@ -492,8 +504,10 @@ export function MaterialsPage() {
           onSubmit={(e: FormEvent<HTMLFormElement>) => {
             e.preventDefault();
             if (!session?.orgId) return;
-            const fd = new FormData(e.currentTarget);
+            const form = e.currentTarget;
+            const fd = new FormData(form);
             setError(null);
+            setSaved(false);
             void upsertMaterial({
               orgId: session.orgId,
               name: String(fd.get("name") ?? ""),
@@ -503,7 +517,7 @@ export function MaterialsPage() {
             })
               .then(() => {
                 setSaved(true);
-                e.currentTarget.reset();
+                form.reset();
               })
               .catch((err: Error) => setError(err.message));
           }}
@@ -547,7 +561,7 @@ export function MaterialsPage() {
             <article key={m.materialId}>
               <div>
                 <span>{m.category}</span>
-                <small>{m.freshness} ago</small>
+                <small>{m.freshness === "—" ? "Not checked yet" : `${m.freshness} ago`}</small>
               </div>
               <h2>{m.name}</h2>
               <strong>{m.price}</strong>
@@ -639,7 +653,7 @@ export function ActivityPage() {
             <div>
               <span>{a.type.toUpperCase()}</span>
               <h2>{a.title}</h2>
-              <p>{a.detail}</p>
+              <p>{friendlyError(a.detail)}</p>
             </div>
           </article>
         ))}
@@ -903,7 +917,8 @@ export function QuoteDetailPage({ id }: { id: string }) {
               <span>PUBLIC PAGE</span>
               <strong>{money(q.market)}</strong>
               <small>
-                {q.pageUrl ?? "URL pending"} · {q.fresh}
+                {q.fresh}
+                {q.pageUrl ? " · Firecrawl" : " · URL pending"}
               </small>
             </div>
             <div>
@@ -917,29 +932,31 @@ export function QuoteDetailPage({ id }: { id: string }) {
           <div className="evidence">
             <h3>Evidence</h3>
             {q.pageUrl ? (
-              <div>
+              <div className="evidence__row">
                 <a href={q.pageUrl} target="_blank" rel="noreferrer" className="evidence-url">
                   {q.pageUrl}
                 </a>
-                <b>{money(q.market)}</b>
-                <small>Firecrawl extract</small>
+                <b className="evidence__price">{money(q.market)}</b>
+                <small className="evidence__meta">Firecrawl extract</small>
               </div>
             ) : (
               <p>No public page price yet — fail-closed if extract cannot complete.</p>
             )}
             {q.counterText && (
-              <p>
+              <p className="evidence__counter">
                 <strong>Counter sent:</strong> {q.counterText}
               </p>
             )}
-            {q.extractError && <p className="form-error">{q.extractError}</p>}
-            {q.draftError && <p className="form-error">{q.draftError}</p>}
+            {q.extractError && <p className="form-error">{friendlyError(q.extractError)}</p>}
+            {q.draftError && !q.counterText && (
+              <p className="form-error">{friendlyError(q.draftError)}</p>
+            )}
           </div>
         </section>
         <aside className="quote-side">
-          <div>
-            <span>OWNER</span>
-            <strong>{q.assignee || "Unassigned"}</strong>
+          <div className="quote-side__block">
+            <span className="quote-side__label">Owner</span>
+            <strong className="quote-side__value">{q.assignee || "Unassigned"}</strong>
             <div className="assign-row">
               {["Kojo", "Ama", "Esi"].map((p) => (
                 <button
@@ -953,30 +970,41 @@ export function QuoteDetailPage({ id }: { id: string }) {
               ))}
             </div>
           </div>
-          <div>
-            <span>CONFIDENCE</span>
-            <strong>{q.confidence}%</strong>
+          <div className="quote-side__block">
+            <span className="quote-side__label">Confidence</span>
+            <strong className="quote-side__value">{q.confidence}%</strong>
           </div>
           <div className="quote-actions">
-            <Button
-              onClick={() => {
-                void actions.approveToOrder(q.quoteId).then(() => navigate({ to: "/orders" }));
-              }}
-            >
-              <Check /> Approve & order
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => void actions.setQuoteStatus(q.quoteId, "needs_info")}
-            >
-              <Send /> Request changes
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => void actions.setQuoteStatus(q.quoteId, "rejected")}
-            >
-              <X /> Reject
-            </Button>
+            {q.rawStatus !== "approved" && (
+              <Button
+                onClick={() => {
+                  void actions.approveToOrder(q.quoteId).then(() => navigate({ to: "/orders" }));
+                }}
+              >
+                <Check /> {q.rawStatus === "matched" ? "Approve & create PO" : "Approve & order"}
+              </Button>
+            )}
+            {q.rawStatus === "approved" && (
+              <Link className="button button--dark" to="/orders">
+                View purchase orders <ArrowRight />
+              </Link>
+            )}
+            {q.rawStatus !== "approved" && q.rawStatus !== "rejected" && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => void actions.setQuoteStatus(q.quoteId, "needs_info")}
+                >
+                  <Send /> Request changes
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => void actions.setQuoteStatus(q.quoteId, "rejected")}
+                >
+                  <X /> Reject
+                </Button>
+              </>
+            )}
           </div>
         </aside>
       </div>
