@@ -1,5 +1,13 @@
 # Session log
 
+## 2026-09-22 — Per-org settings persist + empty-state clarity
+
+- Settings now **load** notify email, assignee, and inbox id after save (was write-only).
+- Copy clarifies every signup owns its own workspace setup.
+- Materials: clearer field labels; auto Firecrawl on add with URL; friendlier “no unit price” activity text.
+- Suppliers: add form for the org.
+- Empty states on board/approvals/POs/activity point to real next steps.
+
 ## 2026-09-22 — Auth email-only + demo script
 
 - Removed non-working Google/GitHub buttons from `/auth` (email + password only).
