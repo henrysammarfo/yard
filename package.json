@@ -12,7 +12,7 @@
     "format": "prettier --write .",
     "convex:dev": "CONVEX_AGENT_MODE=anonymous convex dev",
     "convex:once": "CONVEX_AGENT_MODE=anonymous convex dev --once",
-    "deploy": "npx @convex-dev/static-hosting deploy"
+    "deploy": "npx @convex-dev/static-hosting deploy --dist .output/public"
   },
   "overrides": {
     "rolldown": "1.2.1"

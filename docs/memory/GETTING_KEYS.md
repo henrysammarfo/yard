@@ -21,7 +21,7 @@ npx convex dev --once --configure=existing   # or new project "yard"
 npm run deploy                               # @convex-dev/static-hosting → *.convex.site
 ```
 
-Until this succeeds, only the **anonymous local** backend at `http://127.0.0.1:3210` works.
+**Status (2026-09-22):** Cloud linked — project `yard` on team `henry-marfo`. Live: https://brainy-horse-649.convex.site. Non-interactive login: write the dashboard token to a temp file and `POST https://api.convex.dev/v1/create_personal_access_token` with `Authorization: Bearer <token>`, then save the returned `accessToken` to `~/.convex/config.json`.
 
 ## 2) FIRECRAWL_API_KEY
 
