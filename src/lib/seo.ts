@@ -11,7 +11,7 @@ export function absoluteUrl(path = "/"): string {
   return `${SITE_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-const ASSET_V = "v3";
+const ASSET_V = "v=3";
 
 export function seoHead({
   title,

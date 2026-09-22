@@ -1,5 +1,13 @@
 # Session log
 
+## 2026-09-22 — Screenshot UX fixes live
+
+- Centered `EmptyState` + CTAs on inbox/dashboard (and other empty CRM pages).
+- Metric notes wrap; High-quote copy shortened; sidebar padding + brand size.
+- Aurora auth: contrast on placeholders/roles/steps, sticky header, bootstrap retry after signIn race.
+- Favicon ASSET_V `v=3` cache-bust on prod.
+- Verified via Playwright signup → inbox → dashboard screenshots.
+
 ## 2026-09-22 — Auth UX + full demo
 
 - Aurora-style `/auth` live (motion + CloudFront hero video + password Convex Auth).

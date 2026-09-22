@@ -129,7 +129,7 @@ export function DashboardPage() {
         <Metric
           label="High-quote exposure"
           value={money(saved)}
-          note="Amount quoted above the public page price"
+          note="Quoted above the public page price"
           icon={TrendingDown}
         />
         <Metric

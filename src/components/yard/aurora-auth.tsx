@@ -52,15 +52,61 @@ export function AuroraAuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [socialNote, setSocialNote] = useState<string | null>(null);
+  const [pendingBootstrap, setPendingBootstrap] = useState<{
+    orgName: string;
+    role: Role;
+  } | null>(null);
+
+  async function ensureBootstrap(args: { orgName: string; role: Role }) {
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      try {
+        return await bootstrap(args);
+      } catch (err) {
+        lastErr = err;
+        const msg = err instanceof Error ? err.message : String(err);
+        // signIn can resolve before the auth token is attached to the next mutation
+        if (!/Authentication required|Unauthenticated|Server Error/i.test(msg)) {
+          throw err;
+        }
+        await new Promise((r) => setTimeout(r, 120 + attempt * 80));
+      }
+    }
+    throw lastErr instanceof Error
+      ? lastErr
+      : new Error("Could not finish workspace setup. Try signing in again.");
+  }
 
   useEffect(() => {
     if (!session) return;
     const dest =
-      search.redirect && search.redirect.startsWith("/")
+      search.redirect && search.redirect.startsWith("/") && search.redirect !== "/auth"
         ? search.redirect
         : roleProfiles[session.role].home;
     void navigate({ to: dest });
   }, [session, navigate, search.redirect]);
+
+  // Finish org creation if sign-in landed before bootstrap could see the token
+  useEffect(() => {
+    if (!pendingBootstrap || session) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        await ensureBootstrap(pendingBootstrap);
+        if (!cancelled) setPendingBootstrap(null);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Workspace setup failed");
+          setPendingBootstrap(null);
+          setBusy(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ensureBootstrap is stable enough for this retry
+  }, [pendingBootstrap, session]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -77,24 +123,18 @@ export function AuroraAuthPage() {
       form.set("password", password);
       form.set("flow", mode);
       if (mode === "signUp") form.set("name", fullName);
+      const nextOrg = orgName.trim() || "YARD Org";
       await signIn("password", form);
-      if (mode === "signUp") {
-        await bootstrap({ orgName: orgName.trim() || "YARD Org", role });
-      } else {
-        try {
-          await bootstrap({ orgName: orgName.trim() || "YARD Org", role });
-        } catch {
-          /* already has membership */
-        }
-      }
+      setPendingBootstrap({ orgName: nextOrg, role });
+      await ensureBootstrap({ orgName: nextOrg, role });
+      setPendingBootstrap(null);
       const dest =
-        search.redirect && search.redirect.startsWith("/")
+        search.redirect && search.redirect.startsWith("/") && search.redirect !== "/auth"
           ? search.redirect
           : roleProfiles[role].home;
       void navigate({ to: dest });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
-    } finally {
       setBusy(false);
     }
   }
@@ -299,7 +339,7 @@ export function AuroraAuthPage() {
               disabled={busy}
               className="mt-4 h-14 w-full rounded-xl bg-white text-base font-semibold text-black transition hover:bg-white/90 active:scale-[0.98] disabled:opacity-60"
             >
-              {busy
+              {busy || pendingBootstrap
                 ? "Working…"
                 : mode === "signUp"
                   ? "Create Account"

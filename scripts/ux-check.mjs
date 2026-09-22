@@ -46,13 +46,19 @@ const icons = await page.evaluate(() =>
 console.log("favicon links", icons);
 
 await page.getByRole("button", { name: /Create Account/i }).click();
-await page.waitForURL((url) => !url.pathname.includes("/auth"), { timeout: 30000 }).catch(() => null);
-await page.waitForTimeout(3000);
+await page.waitForURL((url) => !url.pathname.includes("/auth"), { timeout: 45000 }).catch(() => null);
+await page.waitForTimeout(2000);
 console.log("after signup URL", page.url());
 await shot("ux-after-signup");
 
 const err = await page.locator('[role="alert"]').textContent().catch(() => null);
 if (err) console.log("AUTH ERROR", err);
+
+if (page.url().includes("/auth")) {
+  console.log("still on auth — aborting page checks");
+  await browser.close();
+  process.exit(1);
+}
 
 await page.goto(`${base}/inbox`, { waitUntil: "domcontentloaded", timeout: 60000 });
 await page.waitForTimeout(4000);
@@ -71,6 +77,16 @@ console.log("truncated?", dash.includes("public page p..."));
 console.log("full note?", dash.includes("Amount quoted above the public page price"));
 console.log("nothing waiting?", dash.includes("Nothing waiting"));
 console.log("open settings?", dash.includes("Open Settings"));
+
+// Favicon content-type + SVG mark
+const fav = await page.evaluate(async () => {
+  const href = document.querySelector('link[rel="icon"][type="image/svg+xml"]')?.getAttribute("href");
+  if (!href) return { href: null };
+  const res = await fetch(href);
+  const text = await res.text();
+  return { href, ok: res.ok, hasY: text.includes("L16.9 25.2") || text.includes("M7.6") };
+});
+console.log("favicon check", fav);
 
 await browser.close();
 console.log("email used", email);
