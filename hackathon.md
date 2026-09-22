@@ -40,6 +40,10 @@ Logged into Convex (team `henry-marfo`, project `yard`), set FIRECRAWL / AGENTMA
 ### 2026-09-22 - auth UX + marketing polish
 Shipped Aurora-style two-column `/auth` (hero video + signup/sign-in), favicon/OG/apple-touch/link-preview assets, shared `seoHead` meta on all marketing routes, and grammar/copy polish across public pages. Full page demo verified including dashboard, inbox, board, and settings after signup.
 
+### 2026-09-22 - submission pack
+Rewrote README for YARD (product story, mermaid flows, working feature list, no secrets).
+Added vibeapps copy-paste form at `docs/SUBMISSION_FORM.md` and live demo paste sheet at `docs/DEMO_PASTE.md`.
+
 ### 2026-09-22 - full feature demo + counter spine verified
 Ran full CRM + marketing pass on prod. Fixed email price parser (no more 50kg-as-price), LLM draft fallback when AgentRouter is blocked, and AgentMail counter send via parent-deployment action (component pool cannot read AGENTMAIL_API_KEY). Live proof: inbound high quote → Firecrawl page price → numbers-only counter reply with `yard-counter` label on AgentMail. Demo video ≤3 min recorded for vibeapps submit.
 
