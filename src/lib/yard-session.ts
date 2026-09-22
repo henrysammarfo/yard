@@ -153,6 +153,7 @@ function displayStatus(status: Doc<"quotes">["status"]): string {
     case "needs_info":
       return "Needs info";
     case "matched":
+      return "Matched";
     case "approved":
       return "Approved";
     case "countered":

@@ -206,7 +206,7 @@ export function DashboardPage() {
   );
 }
 
-const filters = ["All", "Review", "Approved", "Needs info", "Countered", "Rejected"] as const;
+const filters = ["All", "Review", "Matched", "Approved", "Needs info", "Countered", "Rejected"] as const;
 
 export function BoardPage() {
   const { quotes } = useYard();
