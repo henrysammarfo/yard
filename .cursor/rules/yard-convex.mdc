@@ -1,0 +1,14 @@
+---
+description: Convex backend conventions for YARD
+globs: convex/**/*.ts
+alwaysApply: false
+---
+
+# Convex conventions
+
+- Import `query`/`mutation`/`action`/`internal*` from `./_generated/server`; `api`/`internal` from `./_generated/api`.
+- Index by `orgId` (+ status). Never unbounded `.collect()` on growing tables — use `.withIndex` + `.take`/paginate.
+- `"use node"` only in action-only modules; never mix with queries/mutations.
+- AgentMail webhook via component `handleWebhook`; Firecrawl via `FirecrawlClient` from actions.
+- LLM drafts in actions: AgentRouter (`https://agentrouter.org/v1`) or Convex AI Gateway; never invent prices.
+- Reserved JS names are forbidden as export names (`delete`, `new`, …).

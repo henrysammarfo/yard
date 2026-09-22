@@ -1,0 +1,16 @@
+---
+description: YARD Bible spine — fail-closed quote vs public page; no localStorage; multitenant
+alwaysApply: true
+---
+
+# YARD binding rules
+
+- Unique job: a quote cannot pass until the supplier’s own public page agrees.
+- Spine: AgentMail inbound → Convex quote → Firecrawl unit-price extract → compare → LLM phrases from numbers only → AgentMail reply only if quoted > page.
+- Fail-closed: extract fail or LLM/send fail → amber / counter_failed → **no outbound mail**. Never invent a unit price.
+- No localStorage for auth or workspace data. Use Convex Auth + org-scoped queries.
+- Every business row carries `orgId`. Enforce membership + role on every query/mutation.
+- Kill: display-only price board, chat-email clone, AI COO, AFTERCUT, Accra-as-ICP marketing.
+- Secrets only in Convex env. Never commit keys or paste them into `hackathon.md`.
+- Prefer existing Convex components (`@firecrawl/firecrawl-convex`, `@agentmail/convex`) over custom integrations.
+- Host target: `convex.site` via `@convex-dev/static-hosting`. Keep `hackathon.md` current after meaningful progress.

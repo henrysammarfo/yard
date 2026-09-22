@@ -1,97 +1,151 @@
-import { useSyncExternalStore } from "react";
-import { activity as seedActivity, orders as seedOrders, quotes as seedQuotes, type Quote, type QuoteStatus } from "./yard-data";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { mapQuote, useOrgId, type UiQuote } from "./yard-session";
+import type { Id } from "../../convex/_generated/dataModel";
 
-export type ActivityItem = { time: string; title: string; detail: string; type: string };
-export type Order = { id: string; supplier: string; item: string; total: string; date: string; status: string };
-export type State = { quotes: Quote[]; orders: Order[]; activity: ActivityItem[]; supplierQuotes: { id: string; material: string; total: string; status: string; date: string }[] };
+export type YardView = {
+  quotes: UiQuote[];
+  orders: Array<{
+    id: string;
+    orderId: Id<"orders">;
+    supplier: string;
+    item: string;
+    total: string;
+    date: string;
+    status: string;
+  }>;
+  activity: Array<{ time: string; title: string; detail: string; type: string }>;
+  suppliers: Array<{
+    id: string;
+    supplierId: Id<"suppliers">;
+    name: string;
+    category: string;
+    score: number;
+    quotes: number;
+    winRate: string;
+    response: string;
+    spend: string;
+    status: string;
+  }>;
+  materials: Array<{
+    materialId: Id<"materials">;
+    name: string;
+    category: string;
+    price: string;
+    unit: string;
+    change: string;
+    direction: string;
+    source: string;
+    freshness: string;
+  }>;
+  ready: boolean;
+};
 
-const KEY = "yard.workspace";
+export function useYard(): YardView {
+  const orgId = useOrgId();
+  const quotesRaw = useQuery(api.quotes.listByOrg, orgId ? { orgId } : "skip");
+  const ordersRaw = useQuery(api.catalog.listOrders, orgId ? { orgId } : "skip");
+  const activityRaw = useQuery(api.catalog.listActivity, orgId ? { orgId } : "skip");
+  const suppliersRaw = useQuery(api.catalog.list, orgId ? { orgId } : "skip");
+  const materialsRaw = useQuery(api.catalog.listMaterials, orgId ? { orgId } : "skip");
 
-function seed(): State {
+  const ready =
+    !!orgId &&
+    quotesRaw !== undefined &&
+    ordersRaw !== undefined &&
+    activityRaw !== undefined &&
+    suppliersRaw !== undefined &&
+    materialsRaw !== undefined;
+
   return {
-    quotes: seedQuotes.map((q) => ({ ...q })),
-    orders: seedOrders.map((o) => ({ ...o })),
-    activity: seedActivity.map((a) => ({ ...a })),
-    supplierQuotes: [
-      { id: "QT-2048", material: "16mm high-tensile rods", total: "GH₵ 23,880", status: "Review", date: "21 Sep" },
-      { id: "QT-2031", material: "12mm rods", total: "GH₵ 13,860", status: "Approved", date: "14 Sep" },
-      { id: "QT-2019", material: "Binding wire", total: "GH₵ 4,480", status: "Rejected", date: "09 Sep" },
-    ],
+    ready,
+    quotes: (quotesRaw ?? []).map(mapQuote),
+    orders: (ordersRaw ?? []).map((o) => ({
+      id: o.publicId,
+      orderId: o._id,
+      supplier: o.supplierName,
+      item: o.itemLabel,
+      total: o.totalLabel,
+      date: new Date(o.createdAt).toLocaleDateString(),
+      status: o.status,
+    })),
+    activity: (activityRaw ?? []).map((a) => ({
+      time: new Date(a.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      title: a.title,
+      detail: a.detail,
+      type: a.type,
+    })),
+    suppliers: (suppliersRaw ?? []).map((s) => ({
+      id: s.slug,
+      supplierId: s._id,
+      name: s.name,
+      category: s.category,
+      score: s.score,
+      quotes: s.quoteCount,
+      winRate: s.winRate,
+      response: s.response,
+      spend: s.spendLabel,
+      status: s.status,
+    })),
+    materials: (materialsRaw ?? []).map((m) => ({
+      materialId: m._id,
+      name: m.name,
+      category: m.category,
+      price: m.pagePrice != null ? String(m.pagePrice) : "—",
+      unit: m.unit,
+      change: m.changeLabel,
+      direction: m.direction,
+      source: m.sourceLabel,
+      freshness: m.freshnessMs
+        ? `${Math.max(1, Math.round((Date.now() - m.freshnessMs) / 60000))}m`
+        : "—",
+    })),
   };
 }
 
-let state: State = seed();
-let hydrated = false;
-const listeners = new Set<() => void>();
+export function useQuoteActions() {
+  const orgId = useOrgId();
+  const setStatus = useMutation(api.quotes.setStatus);
+  const assign = useMutation(api.quotes.assign);
+  const createOrder = useMutation(api.catalog.createOrderFromQuote);
+  const setOrderStatus = useMutation(api.catalog.setOrderStatus);
+  const refreshMaterial = useMutation(api.catalog.refreshMaterial);
+  const submitSupplierQuote = useMutation(api.catalog.submitSupplierQuote);
 
-function persist() {
-  try { window.localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* storage blocked */ }
-}
-
-function hydrate() {
-  if (hydrated || typeof window === "undefined") return;
-  hydrated = true;
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    if (raw) state = { ...seed(), ...(JSON.parse(raw) as State) };
-  } catch { state = seed(); }
-}
-
-function set(next: State) { state = next; persist(); listeners.forEach((l) => l()); }
-
-function clock() {
-  const d = new Date();
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
-const money = (n: number) => `GH₵ ${n.toLocaleString()}`;
-
-function log(entry: ActivityItem, s: State): State { return { ...s, activity: [entry, ...s.activity] }; }
-
-export function setQuoteStatus(id: string, status: QuoteStatus, actor = "Henry") {
-  hydrate();
-  const quote = state.quotes.find((q) => q.id === id);
-  if (!quote) return;
-  let next: State = { ...state, quotes: state.quotes.map((q) => (q.id === id ? { ...q, status } : q)) };
-  next = { ...next, supplierQuotes: next.supplierQuotes.map((s) => (s.id === id ? { ...s, status } : s)) };
-  if (status === "Approved" && !next.orders.some((o) => o.item.includes(quote.material) && o.supplier === quote.supplier && o.status === "Confirmed" && o.id.startsWith("PO-2"))) {
-    const po: Order = { id: `PO-2${String(next.orders.length + 1).padStart(3, "0")}`, supplier: quote.supplier, item: `${quote.quantity} · ${quote.specification}`, total: money(quote.quoted), date: "21 Sep", status: "Confirmed" };
-    next = { ...next, orders: [po, ...next.orders] };
-    next = log({ time: clock(), title: `Purchase ${po.id} created`, detail: `${actor} approved ${quote.id} and a confirmation was queued to ${quote.supplier}.`, type: "approve" }, next);
-  } else {
-    next = log({ time: clock(), title: `Quote ${quote.id} marked ${status.toLowerCase()}`, detail: `${actor} updated ${quote.supplier}’s quote for ${quote.material}.`, type: status === "Rejected" ? "reject" : "assign" }, next);
-  }
-  set(next);
-}
-
-export function assignQuote(id: string, assignee: string) {
-  hydrate();
-  const quote = state.quotes.find((q) => q.id === id);
-  if (!quote) return;
-  set(log({ time: clock(), title: `Quote ${id} assigned to ${assignee}`, detail: `${quote.material} from ${quote.supplier} is now owned by ${assignee}.`, type: "assign" }, { ...state, quotes: state.quotes.map((q) => (q.id === id ? { ...q, assignee } : q)) }));
-}
-
-export function setOrderStatus(id: string, status: string) {
-  hydrate();
-  set(log({ time: clock(), title: `${id} marked ${status.toLowerCase()}`, detail: `Purchase order status updated from the workspace.`, type: "order" }, { ...state, orders: state.orders.map((o) => (o.id === id ? { ...o, status } : o)) }));
-}
-
-export function submitSupplierQuote(material: string, total: string) {
-  hydrate();
-  const id = `QT-21${String(state.supplierQuotes.length + 1).padStart(2, "0")}`;
-  set(log({ time: clock(), title: `New quote ${id} received`, detail: `Aseda Steel Works submitted ${material} at ${total}.`, type: "mail" }, { ...state, supplierQuotes: [{ id, material, total, status: "Review", date: "21 Sep" }, ...state.supplierQuotes] }));
-}
-
-export function refreshMarket(material: string) {
-  hydrate();
-  set(log({ time: clock(), title: "Market price refreshed", detail: `A public price check ran for ${material} (simulated in demo mode).`, type: "crawl" }, state));
-}
-
-export function resetWorkspace() { set(seed()); }
-
-function subscribe(cb: () => void) { hydrate(); listeners.add(cb); return () => { listeners.delete(cb); }; }
-const server = seed();
-
-export function useYard() {
-  return useSyncExternalStore(subscribe, () => { hydrate(); return state; }, () => server);
+  return {
+    orgId,
+    async setQuoteStatus(
+      quoteId: Id<"quotes">,
+      status: "approved" | "rejected" | "needs_info" | "pending",
+    ) {
+      if (!orgId) throw new Error("No organization");
+      await setStatus({ orgId, quoteId, status });
+    },
+    async assignQuote(quoteId: Id<"quotes">, assignee: string) {
+      if (!orgId) throw new Error("No organization");
+      await assign({ orgId, quoteId, assignee });
+    },
+    async approveToOrder(quoteId: Id<"quotes">) {
+      if (!orgId) throw new Error("No organization");
+      return await createOrder({ orgId, quoteId });
+    },
+    async updateOrderStatus(orderId: Id<"orders">, status: string) {
+      if (!orgId) throw new Error("No organization");
+      await setOrderStatus({ orgId, orderId, status });
+    },
+    async refreshMarket(materialId: Id<"materials">) {
+      if (!orgId) throw new Error("No organization");
+      await refreshMaterial({ orgId, materialId });
+    },
+    async submitSupplierQuote(input: {
+      material: string;
+      specification: string;
+      quantity: string;
+      quotedUnitPrice: number;
+      pageUrl?: string;
+    }) {
+      if (!orgId) throw new Error("No organization");
+      return await submitSupplierQuote({ orgId, ...input });
+    },
+  };
 }
