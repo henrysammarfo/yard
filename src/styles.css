@@ -2,6 +2,11 @@
 @source "../src";
 @import "tw-animate-css";
 
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-gray: #1a1a1a;
+}
+
 :root {
   --bg: #ffffff;
   --text: #0a0a0a;
@@ -14,8 +19,9 @@
   --book-border: rgb(248, 248, 248);
   --slot-text: rgb(152, 152, 152);
   --line: #fcfaf8;
-  --font-sans: "Inter", sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Source Serif 4", serif;
+  --color-brand-gray: #1a1a1a;
 }
 
 * {

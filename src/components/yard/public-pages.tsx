@@ -1,31 +1,30 @@
-import { useAuthActions } from "@convex-dev/auth/react";
 import { useMutation } from "convex/react";
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { PublicShell, PageIntro } from "./public-shell";
-import { roleProfiles, useSession, type Role } from "@/lib/yard-session";
 import { Check, CircleHelp, Mail, Search, ShieldCheck, Users } from "lucide-react";
+export { AuroraAuthPage as AuthPage } from "./aurora-auth";
 
 const workflows = [
   {
     n: "01",
     title: "Email intake",
-    copy: "Supplier quotes arrive by email. AgentMail webhooks create a live quote row in Convex.",
+    copy: "Supplier quotes still arrive by email. AgentMail delivers each message into Convex as a live quote row your team can act on.",
     meta: "AgentMail",
   },
   {
     n: "02",
     title: "Public page check",
-    copy: "Firecrawl extracts the unit price from the supplier’s own public page. Extract fail stays amber — no mail.",
+    copy: "Firecrawl reads the unit price from the supplier’s own public page. If extraction fails, the quote stays amber and no email goes out.",
     meta: "Firecrawl",
   },
   {
     n: "03",
     title: "Counter or pass",
-    copy: "If quoted is higher than the page, YARD drafts a counter from those numbers only and AgentMail replies.",
+    copy: "When the quoted unit price is higher than the page price, YARD drafts a counter from those numbers only—and AgentMail sends the reply.",
     meta: "OpenAI-compatible draft",
   },
 ];
@@ -36,7 +35,7 @@ export function ProjectsPage() {
       <PageIntro
         eyebrow="PROJECTS"
         title="The buying work, connected."
-        copy="Explore the operational workflows YARD turns into one clear, accountable system."
+        copy="Three workflows that turn messy supplier email into a clear, accountable buying record."
       />
       <section className="project-list">
         {workflows.map((w) => (
@@ -46,8 +45,8 @@ export function ProjectsPage() {
               <small>{w.meta}</small>
               <h2>{w.title}</h2>
               <p>{w.copy}</p>
-              <Link to="/dashboard">
-                View in dashboard <ArrowRight />
+              <Link to="/auth">
+                Open the workspace <ArrowRight />
               </Link>
             </div>
           </article>
@@ -61,7 +60,7 @@ export function PlansPage() {
   const plans = [
     {
       name: "SITE",
-      title: "For one active yard",
+      title: "For one active buying team",
       price: "$49",
       detail: "1 inbox · 5 teammates · 250 quotes/mo",
     },
@@ -73,17 +72,17 @@ export function PlansPage() {
     },
     {
       name: "NETWORK",
-      title: "For multi-yard teams",
+      title: "For multi-site teams",
       price: "LET’S TALK",
-      detail: "Custom yards · controls · onboarding",
+      detail: "Custom inboxes · controls · onboarding",
     },
   ];
   return (
     <PublicShell>
       <PageIntro
         eyebrow="PLANS"
-        title="Start with the yard you run today."
-        copy="Simple plans built around quote volume, team size, and buying oversight."
+        title="Start with the team you run today."
+        copy="Simple pricing based on quote volume, teammate seats, and buying oversight—not feature theatre."
       />
       <section className="plans-grid">
         {plans.map((p, i) => (
@@ -109,14 +108,17 @@ export function TeamPage() {
       <PageIntro
         eyebrow="TEAM"
         title="Built close to the work."
-        copy="YARD is built where materials move — for everyday buyers who still price jobs from supplier email."
+        copy="YARD is for everyday buyers who still price jobs from supplier email—and need a fail-closed check before they spend."
       />
       <section className="team-feature">
         <div className="team-monogram">HM</div>
         <div>
           <span>FOUNDER & BUILDER</span>
           <h2>Henry Sam Marfo</h2>
-          <p>Product direction and systems — useful software that fits work people already do.</p>
+          <p>
+            Product direction and systems engineering—software that fits the work people already do,
+            not a new ritual they have to learn.
+          </p>
           <div className="team-links">
             <a href="https://x.com/henrysammarfo" target="_blank" rel="noreferrer">
               @henrysammarfo
@@ -131,17 +133,20 @@ export function TeamPage() {
         <article>
           <Users />
           <h3>Buyer first</h3>
-          <p>US / EU / APAC builders and yard buyers — Accra is where it’s built, not the ICP.</p>
+          <p>
+            Built for builders and yard buyers worldwide. We build from Accra; the product serves
+            any team that buys by email.
+          </p>
         </article>
         <article>
           <ShieldCheck />
           <h3>Fail-closed evidence</h3>
-          <p>No page price, no counter. The LLM never invents a unit price.</p>
+          <p>No public page price, no counter. The model never invents a unit price.</p>
         </article>
         <article>
           <Check />
           <h3>Everyday useful</h3>
-          <p>One emailed price vs one public page — then a live row.</p>
+          <p>One emailed quote versus one public page—then a live row your team can approve.</p>
         </article>
       </section>
     </PublicShell>
@@ -152,27 +157,27 @@ export function FaqsPage() {
   const qs: [string, string][] = [
     [
       "Does YARD replace supplier email?",
-      "No. Suppliers keep emailing. YARD turns those messages into checked decisions and replies when needed.",
+      "No. Suppliers keep emailing as they do today. YARD turns those messages into checked decisions and only replies when a counter is justified.",
     ],
     [
       "What if the page price cannot be extracted?",
-      "The quote stays amber and no outbound mail is sent. Fail-closed by design.",
+      "The quote stays amber and no outbound mail is sent. That fail-closed rule is intentional—never guess a unit price.",
     ],
     [
-      "Can several staff review a quote?",
+      "Can several people review a quote?",
       "Yes. Quotes can be assigned, reviewed, approved, rejected, or sent back for more information.",
     ],
     [
       "Is this connected to live services?",
-      "Yes. AgentMail, Firecrawl, and Convex power the live loop. LLM draft uses Convex AI Gateway or AgentRouter from the server.",
+      "Yes. AgentMail, Firecrawl, and Convex power the live loop. Draft replies use an OpenAI-compatible model from the server—never from the browser.",
     ],
   ];
   return (
     <PublicShell>
       <PageIntro
         eyebrow="FAQs"
-        title="Clear answers, before you commit."
-        copy="How YARD handles suppliers, prices, approvals, and live operations."
+        title="Clear answers before you commit."
+        copy="How YARD handles suppliers, prices, approvals, and the live services behind the board."
       />
       <section className="faq-list">
         {qs.map(([q, a], i) => (
@@ -214,21 +219,21 @@ export function ContactPage() {
       <PageIntro
         eyebrow="GET IN TOUCH"
         title="Bring us your busiest buying day."
-        copy="Tell us how you receive quotes today. We’ll show the YARD loop."
+        copy="Tell us how quotes arrive today. We will walk you through the YARD loop on your own inbox."
       />
       <section className="contact-layout">
         <aside>
           <h2>Demo enquiries</h2>
-          <p>Product demos and pilot conversations are open.</p>
+          <p>Product demos and short pilot conversations are open.</p>
           <span className="contact-note">
-            <Mail /> Use the form — messages persist in Convex.
+            <Mail /> Use the form—messages are stored securely in Convex.
           </span>
         </aside>
         {sent ? (
           <div className="form-success">
             <Check />
             <h2>Message received.</h2>
-            <p>Thanks. We’ll get back to you shortly.</p>
+            <p>Thanks. We will get back to you shortly.</p>
             <Button onClick={() => setSent(false)} variant="outline">
               Send another
             </Button>
@@ -244,7 +249,7 @@ export function ContactPage() {
               <input required type="email" name="email" placeholder="you@company.com" />
             </label>
             <label>
-              Yard or company
+              Company
               <input name="company" placeholder="Business name" />
             </label>
             <label>
@@ -272,8 +277,8 @@ export function HowItWorksPage() {
     <PublicShell>
       <PageIntro
         eyebrow="HOW IT WORKS"
-        title="Eight seconds from email to evidence."
-        copy="A fail-closed loop where every system changes the live buying state."
+        title="From inbox to evidence—fail-closed."
+        copy="Three live systems update the buying state together. If the page price cannot be proven, nothing ships."
       />
       <section className="project-list">
         {workflows.map((w) => (
@@ -297,13 +302,13 @@ export function AboutPage() {
       <PageIntro
         eyebrow="ABOUT YARD"
         title="Built for people who still buy from email."
-        copy="YARD checks a supplier quote against that supplier’s public page — then replies only when the quote is high."
+        copy="YARD checks a supplier quote against that supplier’s public page, then replies only when the quoted unit price is high."
       />
       <section className="prose-band">
         <h2>Everyday usefulness over software theatre.</h2>
         <p>
-          Prices move. Quotes arrive messy. YARD creates a live, legible record without asking
-          suppliers to learn a new system.
+          Prices move. Quotes arrive messy. YARD keeps a live, legible record without asking
+          suppliers to learn a new system—or asking buyers to trust a guessed number.
         </p>
       </section>
     </PublicShell>
@@ -316,7 +321,7 @@ export function HelpPage() {
       <PageIntro
         eyebrow="HELP CENTRE"
         title="Find your next step."
-        copy="Guides for inbox setup, quote review, market evidence, approvals, and supplier replies."
+        copy="Short guides for inbox setup, quote review, market evidence, approvals, and supplier replies."
       />
       <section className="help-search">
         <Search />
@@ -324,17 +329,17 @@ export function HelpPage() {
       </section>
       <section className="principles">
         {[
-          "Getting started",
-          "Reviewing a quote",
-          "Managing approvals",
-          "Supplier access",
-          "Market evidence",
-          "Account & settings",
-        ].map((x) => (
-          <article key={x}>
+          ["Getting started", "Create your workspace, invite teammates, and connect AgentMail."],
+          ["Reviewing a quote", "Read the email, the page price, and the amber or green status."],
+          ["Managing approvals", "Assign owners, approve spend, or send a quote back for clarity."],
+          ["Supplier access", "Give suppliers a portal without changing how they email you."],
+          ["Market evidence", "See how Firecrawl grounds every counter in a public unit price."],
+          ["Account & settings", "Inbox ID, roles, and integration readiness for your organisation."],
+        ].map(([title, body]) => (
+          <article key={title}>
             <CircleHelp />
-            <h3>{x}</h3>
-            <p>Step-by-step guidance for your YARD workspace.</p>
+            <h3>{title}</h3>
+            <p>{body}</p>
           </article>
         ))}
       </section>
@@ -348,7 +353,7 @@ export function HackathonPage() {
       <PageIntro
         eyebrow="CONVEX ALL GAS · BUILD LOG"
         title="The proof is in the live loop."
-        copy="Mail → Firecrawl page price → counter only on high quotes → live Convex board."
+        copy="Mail in, Firecrawl page price, counter only when the quote is high, live Convex board out."
       />
       <section className="hack-grid">
         <article>
@@ -381,7 +386,7 @@ export function LegalPage({ kind }: { kind: "Security" | "Privacy" | "Terms" }) 
   const copy = {
     Security: "How we protect workspace access, supplier records, and approvals.",
     Privacy: "How YARD handles account, supplier, and quote information.",
-    Terms: "The terms governing use of YARD.",
+    Terms: "The terms that govern use of the YARD workspace.",
   }[kind];
   return (
     <PublicShell>
@@ -390,162 +395,32 @@ export function LegalPage({ kind }: { kind: "Security" | "Privacy" | "Terms" }) 
         <p>Last updated 22 September 2026</p>
         <h2>Production posture</h2>
         <p>
-          Org-scoped data, Convex Auth sessions (no localStorage), signed AgentMail webhooks, and
-          secrets held in Convex environment variables.
+          Data is scoped by organisation. Sessions use Convex Auth (not localStorage). AgentMail
+          webhooks are signature-verified. API secrets stay in Convex environment variables.
         </p>
         <h2>Fail-closed pricing</h2>
         <p>
-          If a public unit price cannot be extracted, the quote stays amber and no counter is sent.
+          If a public unit price cannot be extracted, the quote stays amber and no counter email is
+          sent.
         </p>
-      </section>
-    </PublicShell>
-  );
-}
-
-export function AuthPage() {
-  const { signIn } = useAuthActions();
-  const bootstrap = useMutation(api.organizations.bootstrap);
-  const session = useSession();
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { redirect?: string };
-  const [mode, setMode] = useState<"signIn" | "signUp">("signUp");
-  const [role, setRole] = useState<Role>("owner");
-  const [orgName, setOrgName] = useState("YARD Buyers Co");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (!session) return;
-    const dest =
-      search.redirect && search.redirect.startsWith("/")
-        ? search.redirect
-        : roleProfiles[session.role].home;
-    void navigate({ to: dest });
-  }, [session, navigate, search.redirect]);
-
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      const form = new FormData();
-      form.set("email", email.trim().toLowerCase());
-      form.set("password", password);
-      form.set("flow", mode);
-      if (mode === "signUp") form.set("name", name || email.split("@")[0] || "Member");
-      await signIn("password", form);
-      if (mode === "signUp") {
-        await bootstrap({ orgName: orgName.trim() || "YARD Org", role });
-      } else {
-        // Existing users may still need an org on first login after schema cutover
-        try {
-          await bootstrap({ orgName: orgName.trim() || "YARD Org", role });
-        } catch {
-          /* already has membership */
-        }
-      }
-      const dest =
-        search.redirect && search.redirect.startsWith("/")
-          ? search.redirect
-          : roleProfiles[role].home;
-      void navigate({ to: dest });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Authentication failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <PublicShell>
-      <section className="auth-page">
-        <div>
-          <span className="eyebrow">SECURE WORKSPACE</span>
-          <h1>Sign in to YARD.</h1>
-          <p>
-            Convex Auth sessions — no localStorage. Pick your role when you create the workspace,
-            then return to the page you came from.
-          </p>
-        </div>
-        <form className="auth-form" onSubmit={(e) => void onSubmit(e)}>
-          <div className="auth-tabs">
-            <button
-              type="button"
-              className={mode === "signUp" ? "is-active" : ""}
-              onClick={() => setMode("signUp")}
-            >
-              Create account
-            </button>
-            <button
-              type="button"
-              className={mode === "signIn" ? "is-active" : ""}
-              onClick={() => setMode("signIn")}
-            >
-              Sign in
-            </button>
-          </div>
-          {mode === "signUp" && (
-            <>
-              <label>
-                Your name
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Ama Buyer"
-                />
-              </label>
-              <label>
-                Organization
-                <input required value={orgName} onChange={(e) => setOrgName(e.target.value)} />
-              </label>
-              <fieldset className="role-fieldset">
-                <legend>Role</legend>
-                {(Object.keys(roleProfiles) as Role[]).map((r) => (
-                  <label key={r} className={role === r ? "is-active" : ""}>
-                    <input
-                      type="radio"
-                      name="role"
-                      checked={role === r}
-                      onChange={() => setRole(r)}
-                    />
-                    <span>
-                      <strong>{roleProfiles[r].label}</strong>
-                      <small>{roleProfiles[r].copy}</small>
-                    </span>
-                  </label>
-                ))}
-              </fieldset>
-            </>
-          )}
-          <label>
-            Work email
-            <input
-              required
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-            />
-          </label>
-          <label>
-            Password
-            <input
-              required
-              type="password"
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === "signUp" ? "new-password" : "current-password"}
-            />
-          </label>
-          {error && <p className="form-error">{error}</p>}
-          <Button type="submit" disabled={busy}>
-            {busy ? "Working…" : mode === "signUp" ? "Create workspace" : "Sign in"} <ArrowRight />
-          </Button>
-        </form>
+        {kind === "Privacy" && (
+          <>
+            <h2>What we store</h2>
+            <p>
+              Account identity, organisation membership, supplier and quote records, and messages
+              needed to run the buying loop. Contact-form enquiries are stored so we can reply.
+            </p>
+          </>
+        )}
+        {kind === "Terms" && (
+          <>
+            <h2>Acceptable use</h2>
+            <p>
+              Use YARD for legitimate procurement workflows. Do not attempt to bypass organisation
+              boundaries, abuse inbound mail, or rely on YARD as a substitute for legal advice.
+            </p>
+          </>
+        )}
       </section>
     </PublicShell>
   );

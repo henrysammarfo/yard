@@ -1,21 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { seoHead } from "@/lib/seo";
 import { HowItWorksPage } from "@/components/yard/public-pages";
 export const Route = createFileRoute("/how-it-works")({
-  head: () => ({
-    meta: [
-      { title: "How it works — YARD" },
-      {
-        name: "description",
-        content: "See how YARD turns supplier email into a market-checked buying decision.",
-      },
-      { property: "og:title", content: "How it works — YARD" },
-      {
-        property: "og:description",
-        content: "See how YARD turns supplier email into a market-checked buying decision.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      title: 'How it works — YARD',
+      description: 'From inbox to evidence—fail-closed quote checks.',
+      path: '/how-it-works',
+    }),
   component: HowItWorksPage,
 });

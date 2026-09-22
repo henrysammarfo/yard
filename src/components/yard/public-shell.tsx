@@ -49,7 +49,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
           </Link>
         </nav>
         <footer className="menu-overlay__footer">
-          <span>Live procurement for Accra yards</span>
+          <span>Live procurement for everyday buyers</span>
           <span>© 2026 YARD</span>
         </footer>
       </div>
@@ -85,8 +85,10 @@ export function PublicShell({ children }: { children: ReactNode }) {
           <div>
             <span>Workspace</span>
             <Link to="/auth">Sign in</Link>
-            <Link to="/dashboard">Demo dashboard</Link>
-            <Link to="/security">Trust centre</Link>
+            <Link to="/dashboard">Live board</Link>
+            <Link to="/security">Security</Link>
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
           </div>
         </div>
         <div className="site-footer__bottom">

@@ -1,25 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Check } from "lucide-react";
 import { PublicShell } from "@/components/yard/public-shell";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "YARD — Procurement decisions, live" },
-      {
-        name: "description",
-        content:
-          "YARD turns supplier quote emails into live, market-checked buying decisions for Accra yards.",
-      },
-      { property: "og:title", content: "YARD — Procurement decisions, live" },
-      {
-        property: "og:description",
-        content: "Mail in. Market checked. Good buying decisions out.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      title: "YARD — Quote control, live",
+      description:
+        "A supplier emails a price. YARD checks their public page and writes back before you buy—live.",
+      path: "/",
+    }),
   component: Home,
 });
 
@@ -30,6 +21,7 @@ const ticker = [
   "Live Board",
   "Team Approval",
 ];
+
 function CurveLines({ position }: { position: "left" | "right" | "top" }) {
   return (
     <div className={`curve-lines curve-lines--${position}`} aria-hidden="true">
@@ -39,6 +31,7 @@ function CurveLines({ position }: { position: "left" | "right" | "top" }) {
     </div>
   );
 }
+
 function Home() {
   return (
     <PublicShell>
@@ -65,10 +58,10 @@ function Home() {
             </h1>
             <p className="hero__subtitle">
               A supplier emails a price. YARD checks their public page and writes back before you
-              buy — live.
+              buy—live.
             </p>
             <div className="hero__actions">
-              <Link className="primary-cta" to="/dashboard">
+              <Link className="primary-cta" to="/auth">
                 Open Live Board
               </Link>
               <Link className="book-cta" to="/contact">
@@ -118,7 +111,7 @@ function Home() {
           <h2>
             Not another CRM.
             <br />
-            Your yard’s <em>decision layer.</em>
+            Your team’s <em>decision layer.</em>
           </h2>
           <div className="statement-copy">
             <p>

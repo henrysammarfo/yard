@@ -1,15 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { seoHead } from "@/lib/seo";
 import { TeamPage } from "@/components/yard/public-pages";
 export const Route = createFileRoute("/team")({
-  head: () => ({
-    meta: [
-      { title: "Team — YARD" },
-      { name: "description", content: "Meet the Accra-based team building YARD." },
-      { property: "og:title", content: "Team — YARD" },
-      { property: "og:description", content: "Meet the Accra-based team building YARD." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      title: 'Team — YARD',
+      description: 'Built for everyday buyers who still price jobs from supplier email.',
+      path: '/team',
+    }),
   component: TeamPage,
 });
