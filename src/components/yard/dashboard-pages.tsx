@@ -666,7 +666,7 @@ export function TeamDashboardPage() {
   const session = useSession();
   const members = useQuery(
     api.organizations.listMembers,
-    session?.orgId ? { orgId: session.orgId } : "skip",
+    session?.orgId && session.role === "owner" ? { orgId: session.orgId } : "skip",
   );
   const invite = useMutation(api.organizations.inviteMember);
   const [email, setEmail] = useState("");
@@ -736,7 +736,7 @@ export function SettingsPage() {
   const session = useSession();
   const health = useQuery(
     api.materials.integrationHealth,
-    session?.orgId ? { orgId: session.orgId } : "skip",
+    session?.orgId && session.role === "owner" ? { orgId: session.orgId } : "skip",
   );
   const setInbox = useMutation(api.organizations.setInboxId);
   const updateSettings = useMutation(api.organizations.updateSettings);

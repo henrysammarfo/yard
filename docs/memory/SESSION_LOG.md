@@ -1,5 +1,13 @@
 # Session log
 
+## 2026-09-22 — Auth email-only + demo script
+
+- Removed non-working Google/GitHub buttons from `/auth` (email + password only).
+- Sign-in now lands on the **stored membership role** home (owner→dashboard, buyer→board, etc.), not the form default.
+- Confirmed multitenancy: each signup bootstraps its own org; queries gated by `orgId` + `requireMembership`.
+- Role nav filtered in shell; Protected gate blocks wrong-role routes.
+- Click-by-click demo script: `docs/DEMO_SCRIPT.md`.
+
 ## 2026-09-22 — Screenshot UX fixes live
 
 - Centered `EmptyState` + CTAs on inbox/dashboard (and other empty CRM pages).

@@ -17,7 +17,11 @@ export const bootstrap = mutation({
     const userId = await requireUserId(ctx);
     const existing = await primaryMembership(ctx, userId);
     if (existing) {
-      return { orgId: existing.orgId, membershipId: existing._id };
+      return {
+        orgId: existing.orgId,
+        membershipId: existing._id,
+        role: existing.role,
+      };
     }
     const user = await ctx.db.get(userId);
     const displayName =
@@ -46,7 +50,7 @@ export const bootstrap = mutation({
       orgId,
       updatedAt: Date.now(),
     });
-    return { orgId, membershipId };
+    return { orgId, membershipId, role };
   },
 });
 

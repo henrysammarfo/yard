@@ -2,14 +2,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useMutation } from "convex/react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import {
-  Chrome,
-  Circle,
-  Eye,
-  EyeOff,
-  Github,
-  type LucideIcon,
-} from "lucide-react";
+import { Circle, Eye, EyeOff } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import { roleProfiles, useSession, type Role } from "@/lib/yard-session";
@@ -51,7 +44,6 @@ export function AuroraAuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [socialNote, setSocialNote] = useState<string | null>(null);
   const [pendingBootstrap, setPendingBootstrap] = useState<{
     orgName: string;
     role: Role;
@@ -112,7 +104,6 @@ export function AuroraAuthPage() {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    setSocialNote(null);
     try {
       const fullName =
         [firstName, lastName].map((s) => s.trim()).filter(Boolean).join(" ") ||
@@ -123,15 +114,18 @@ export function AuroraAuthPage() {
       form.set("password", password);
       form.set("flow", mode);
       if (mode === "signUp") form.set("name", fullName);
-      const nextOrg = orgName.trim() || "YARD Org";
+      // Sign-in reuses stored membership; org/role only apply on first signup.
+      const nextOrg = mode === "signUp" ? orgName.trim() || "YARD Org" : "YARD Org";
+      const nextRole = mode === "signUp" ? role : "owner";
       await signIn("password", form);
-      setPendingBootstrap({ orgName: nextOrg, role });
-      await ensureBootstrap({ orgName: nextOrg, role });
+      setPendingBootstrap({ orgName: nextOrg, role: nextRole });
+      const workspace = await ensureBootstrap({ orgName: nextOrg, role: nextRole });
       setPendingBootstrap(null);
+      const homeRole = (workspace?.role as Role | undefined) ?? role;
       const dest =
         search.redirect && search.redirect.startsWith("/") && search.redirect !== "/auth"
           ? search.redirect
-          : roleProfiles[role].home;
+          : roleProfiles[homeRole].home;
       void navigate({ to: dest });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
@@ -202,30 +196,6 @@ export function AuroraAuthPage() {
                 : "Sign in with your work email to open the live board."}
             </p>
           </header>
-
-          <div className="grid grid-cols-2 gap-4">
-            <SocialButton
-              icon={Chrome}
-              label="Google"
-              onClick={() =>
-                setSocialNote("Email and password signup is live for this build. Google arrives next.")
-              }
-            />
-            <SocialButton
-              icon={Github}
-              label="Github"
-              onClick={() =>
-                setSocialNote("Email and password signup is live for this build. GitHub arrives next.")
-              }
-            />
-          </div>
-
-          <div className="relative flex items-center">
-            <div className="h-px w-full border-t border-white/10" />
-            <span className="absolute left-1/2 -translate-x-1/2 bg-black px-4 text-xs font-medium uppercase tracking-widest text-white/50">
-              Or
-            </span>
-          </div>
 
           <form className="space-y-4" onSubmit={(e) => void onSubmit(e)}>
             {mode === "signUp" && (
@@ -328,9 +298,9 @@ export function AuroraAuthPage() {
               <p className="text-[11px] text-white/50">Requires at least 8 symbols.</p>
             </div>
 
-            {(error || socialNote) && (
+            {error && (
               <p className="text-sm text-red-300" role="alert">
-                {error ?? socialNote}
+                {error}
               </p>
             )}
 
@@ -357,7 +327,6 @@ export function AuroraAuthPage() {
                   onClick={() => {
                     setMode("signIn");
                     setError(null);
-                    setSocialNote(null);
                   }}
                 >
                   Log in
@@ -372,7 +341,6 @@ export function AuroraAuthPage() {
                   onClick={() => {
                     setMode("signUp");
                     setError(null);
-                    setSocialNote(null);
                   }}
                 >
                   Create New Profile
@@ -418,27 +386,6 @@ function StepItem({
       </span>
       <span className="text-sm font-medium tracking-tight">{text}</span>
     </div>
-  );
-}
-
-function SocialButton({
-  icon: Icon,
-  label,
-  onClick,
-}: {
-  icon: LucideIcon;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-black text-sm font-medium text-white transition hover:bg-white/5"
-    >
-      <Icon className="size-4" />
-      {label}
-    </button>
   );
 }
 
