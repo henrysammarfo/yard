@@ -36,3 +36,6 @@ Rewired YARD to live Convex: multitenant schema, Convex Auth (no localStorage), 
 
 ### 2026-09-22 - cloud deploy
 Logged into Convex (team `henry-marfo`, project `yard`), set FIRECRAWL / AGENTMAIL / AGENTROUTER / Auth env on prod+dev, registered AgentMail webhook to prod site, enabled TanStack Start SPA `index.html` build, and uploaded static hosting. Live: https://brainy-horse-649.convex.site · inbox `yard-allgas@agentmail.to`.
+
+### 2026-09-22 - auth UX + marketing polish
+Shipped Aurora-style two-column `/auth` (hero video + signup/sign-in), favicon/OG/apple-touch/link-preview assets, shared `seoHead` meta on all marketing routes, and grammar/copy polish across public pages. Full page demo verified including dashboard, inbox, board, and settings after signup.
