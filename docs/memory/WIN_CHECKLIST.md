@@ -10,5 +10,5 @@
 - [x] `hackathon.md` at root, Event = Convex All Gas Hackathon
 - [x] Live `https://brainy-horse-649.convex.site`
 - [x] Public GitHub repo
-- [ ] ≤3 min video + social tags
+- [x] ≤3 min video + social tags
 - [ ] Submit on vibeapps.dev before deadline

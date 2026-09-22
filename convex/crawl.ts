@@ -48,61 +48,80 @@ async function draftCounterEmail(args: {
     `Page URL: ${args.pageUrl}\n` +
     `Write a brief professional reply asking them to match ${args.pageUnitPrice}.`;
 
+  const template = () =>
+    enforcePrices(
+      `Hello,\n\nYour quote lists ${args.quotedUnitPrice} per unit for ${args.material}, but your public page lists ${args.pageUnitPrice}. ` +
+        `Please match ${args.pageUnitPrice}.\n\nPage: ${args.pageUrl}\n\nThank you,\nYARD`,
+      args.quotedUnitPrice,
+      args.pageUnitPrice,
+    );
+
+  const tryProvider = async (
+    label: string,
+    baseURL: string,
+    apiKey: string,
+    model: string,
+  ): Promise<string | null> => {
+    try {
+      const openai = new OpenAI({ baseURL, apiKey });
+      const completion = await openai.chat.completions.create({
+        model,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+        temperature: 0.2,
+      });
+      const text = completion?.choices?.[0]?.message?.content?.trim();
+      if (!text) {
+        console.warn(`[draftCounterEmail] ${label} returned empty choices`);
+        return null;
+      }
+      return enforcePrices(text, args.quotedUnitPrice, args.pageUnitPrice);
+    } catch (err) {
+      console.warn(
+        `[draftCounterEmail] ${label} failed:`,
+        err instanceof Error ? err.message : err,
+      );
+      return null;
+    }
+  };
+
   const gatewayToken = await tryGatewayToken();
   if (gatewayToken) {
-    const openai = new OpenAI({
-      baseURL: "https://ai-gateway.convex.dev/v1",
-      apiKey: gatewayToken,
-    });
-    const completion = await openai.chat.completions.create({
-      model: "openai/gpt-4o-mini",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      temperature: 0.2,
-    });
-    const text = completion.choices[0]?.message?.content?.trim();
-    if (text) return enforcePrices(text, args.quotedUnitPrice, args.pageUnitPrice);
+    const text = await tryProvider(
+      "ai-gateway",
+      "https://ai-gateway.convex.dev/v1",
+      gatewayToken,
+      "openai/gpt-4o-mini",
+    );
+    if (text) return text;
   }
 
   const agentRouterKey = process.env.AGENTROUTER_API_KEY;
   if (agentRouterKey) {
-    const openai = new OpenAI({
-      baseURL: "https://agentrouter.org/v1",
-      apiKey: agentRouterKey,
-    });
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      temperature: 0.2,
-    });
-    const text = completion.choices[0]?.message?.content?.trim();
-    if (text) return enforcePrices(text, args.quotedUnitPrice, args.pageUnitPrice);
+    const text = await tryProvider(
+      "agentrouter",
+      "https://agentrouter.org/v1",
+      agentRouterKey,
+      "gpt-4o-mini",
+    );
+    if (text) return text;
   }
 
   const veniceKey = process.env.VENICE_API_KEY;
   if (veniceKey) {
-    const openai = new OpenAI({
-      baseURL: "https://api.venice.ai/api/v1",
-      apiKey: veniceKey,
-    });
-    const completion = await openai.chat.completions.create({
-      model: "llama-3.3-70b",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      temperature: 0.2,
-    });
-    const text = completion.choices[0]?.message?.content?.trim();
-    if (text) return enforcePrices(text, args.quotedUnitPrice, args.pageUnitPrice);
+    const text = await tryProvider(
+      "venice",
+      "https://api.venice.ai/api/v1",
+      veniceKey,
+      "llama-3.3-70b",
+    );
+    if (text) return text;
   }
 
-  throw new Error("No LLM provider available (AI Gateway / AgentRouter / Venice)");
+  // Deterministic numbers-only fallback so counters still send when LLM egress is blocked.
+  return template();
 }
 
 async function tryGatewayToken(): Promise<string | null> {
@@ -249,6 +268,15 @@ async function finishCompare(
     pageUrl,
   });
 
+  // No AgentMail thread (portal/manual) → fail closed, keep page price, no invented reply.
+  if (!quote.agentmailInboxId || !quote.agentmailMessageId) {
+    await ctx.runMutation(internal.quotes.markAmber, {
+      quoteId,
+      extractError: `Quoted ${quotedUnitPrice} above page ${pageUnitPrice}; no AgentMail thread to auto-reply.`,
+    });
+    return;
+  }
+
   try {
     const text = await draftCounterEmail({
       material: quote.material,
@@ -257,14 +285,7 @@ async function finishCompare(
       pageUrl,
       supplierName: quote.supplierName,
     });
-    if (!quote.agentmailInboxId || !quote.agentmailMessageId) {
-      await ctx.runMutation(internal.quotes.markCounterFailed, {
-        quoteId,
-        draftError: "Missing AgentMail message ids for reply",
-      });
-      return;
-    }
-    await ctx.runMutation(internal.email.replyWithCounter, { quoteId, text });
+    await ctx.runAction(internal.email.sendCounterReply, { quoteId, text });
   } catch (err) {
     await ctx.runMutation(internal.quotes.markCounterFailed, {
       quoteId,

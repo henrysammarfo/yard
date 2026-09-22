@@ -249,6 +249,8 @@ export const submitSupplierQuote = mutation({
   handler: async (ctx, args) => {
     const { membership } = await requireMembership(ctx, args.orgId, ["supplier", "owner"]);
     if (!(args.quotedUnitPrice > 0)) throw new Error("Price must be > 0");
+    const qtyMatch = args.quantity.match(/(\d+(?:\.\d+)?)/);
+    const quantityNumber = qtyMatch ? Number(qtyMatch[1]) : 1;
     const publicId = `QT-${Date.now().toString().slice(-6)}`;
     const quoteId = await ctx.db.insert("quotes", {
       orgId: args.orgId,
@@ -258,6 +260,7 @@ export const submitSupplierQuote = mutation({
       material: args.material,
       specification: args.specification,
       quantity: args.quantity,
+      quantityNumber,
       quotedUnitPrice: args.quotedUnitPrice,
       pageUrl: args.pageUrl,
       status: "pending",

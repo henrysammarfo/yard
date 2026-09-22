@@ -751,3 +751,18 @@ a {
   padding-left:28px;
   padding-right:28px;
 }
+.quote-side>div{display:grid;gap:8px;margin-bottom:18px}
+.quote-side>div>span{display:block;color:var(--yard-muted);font-size:11px;font-weight:700;letter-spacing:.04em}
+.quote-side>div>strong{display:block;font-size:18px}
+.evidence-url{
+  display:block;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  color:var(--yard-ink);
+  font-size:13px;
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+.evidence>div{display:grid;gap:6px;grid-template-columns:1fr auto;align-items:start}
+.evidence>div small{grid-column:1/-1;color:var(--yard-muted)}
+.board-table{min-height:auto}

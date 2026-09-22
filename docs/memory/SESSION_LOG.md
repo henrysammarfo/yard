@@ -21,3 +21,10 @@
 - Prod: `brainy-horse-649` · Dev: `fabulous-donkey-651`.
 - Env: FIRECRAWL, AGENTMAIL (+ webhook), AGENTROUTER, JWT/JWKS, SITE_URL.
 - AgentMail inbox `yard-allgas@agentmail.to` → prod webhook.
+
+## 2026-09-22 — Full feature run + submission demo
+
+- Full CRM/marketing E2E passed; materials add form shipped.
+- Spine verified live: AgentMail inbound → Firecrawl → counter reply (`yard-counter`).
+- Fixes: price parser, LLM template fallback, direct AgentMail reply action, Countered status.
+- Demo: `/opt/cursor/artifacts/yard_all_gas_demo.mp4` (~29s).

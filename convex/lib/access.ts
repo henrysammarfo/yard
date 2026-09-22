@@ -92,29 +92,37 @@ export function parseQuoteFromEmail(
 } {
   const blob = `${subject ?? ""}\n${text}`;
   const urlMatch = blob.match(/https?:\/\/[^\s<>"]+/i);
-  const priceMatch =
-    blob.match(
-      /(?:\$|USD\s*|EUR\s*|€|£)?\s*(\d+(?:\.\d{1,4})?)\s*(?:\/|\s+per\s+)?(?:bag|unit|each|ea|ton|m3|m³|length|sheet|roll)?/i,
-    ) ?? blob.match(/(\d+(?:\.\d{1,4})?)/);
+
+  // Prefer explicit currency / "per unit" prices; never treat "50kg" as a unit price.
+  const pricePatterns = [
+    /(?:\$|USD\s*|EUR\s*|€|£)\s*(\d+(?:\.\d{1,4})?)/i,
+    /(\d+(?:\.\d{1,4})?)\s*(?:\/|\s+per\s+)(?:bag|unit|each|ea|ton|m3|m³|copy|copies|length|sheet|roll)\b/i,
+    /(?:unit\s*price|quoted(?:\s*at)?|price)\s*[:=]?\s*(?:\$|USD\s*)?(\d+(?:\.\d{1,4})?)/i,
+  ];
+  let quotedUnitPrice: number | null = null;
+  for (const re of pricePatterns) {
+    const m = blob.match(re);
+    if (!m) continue;
+    const n = Number(m[1]);
+    if (Number.isFinite(n) && n > 0) {
+      quotedUnitPrice = n;
+      break;
+    }
+  }
+  if (quotedUnitPrice == null) {
+    throw new Error("Could not parse a unit price from the email");
+  }
+
   const qtyMatch = blob.match(
-    /(\d+(?:\.\d+)?)\s*(bags?|units?|lengths?|sheets?|rolls?|m3|m³|tons?)/i,
+    /(\d+(?:\.\d+)?)\s*(bags?|units?|lengths?|sheets?|rolls?|m3|m³|tons?|copies|copy)\b/i,
   );
   const materialLine =
     subject?.replace(/^(re:|fwd:)\s*/i, "").trim() ||
     text
       .split("\n")
       .map((l) => l.trim())
-      .find((l) => l.length > 3) ||
+      .find((l) => l.length > 3 && !/^https?:/i.test(l)) ||
     "Quoted material";
-
-  if (!priceMatch) {
-    throw new Error("Could not parse a unit price from the email");
-  }
-
-  const quotedUnitPrice = Number(priceMatch[1]);
-  if (!Number.isFinite(quotedUnitPrice) || quotedUnitPrice <= 0) {
-    throw new Error("Invalid quoted unit price");
-  }
 
   return {
     material: materialLine.slice(0, 120),

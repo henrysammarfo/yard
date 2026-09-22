@@ -154,6 +154,7 @@ function displayStatus(status: Doc<"quotes">["status"]): string {
     case "approved":
       return "Approved";
     case "countered":
+      return "Countered";
     case "rejected":
       return "Rejected";
     default:

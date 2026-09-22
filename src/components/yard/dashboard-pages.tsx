@@ -194,7 +194,7 @@ export function DashboardPage() {
   );
 }
 
-const filters = ["All", "Review", "Approved", "Needs info", "Rejected"] as const;
+const filters = ["All", "Review", "Approved", "Needs info", "Countered", "Rejected"] as const;
 
 export function BoardPage() {
   const { quotes } = useYard();
@@ -471,17 +471,75 @@ export function SuppliersPage() {
 }
 
 export function MaterialsPage() {
+  const session = useSession();
   const { materials } = useYard();
   const actions = useQuoteActions();
+  const upsertMaterial = useMutation(api.catalog.upsertMaterial);
   const [refreshed, setRefreshed] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   return (
     <DashboardShell title="Market prices" eyebrow="PUBLIC EVIDENCE">
+      <section className="dash-panel" style={{ marginBottom: 16 }}>
+        <div className="panel-head">
+          <div>
+            <span>TRACK MATERIAL</span>
+            <h2>Add a public page for Firecrawl</h2>
+          </div>
+        </div>
+        <form
+          className="contact-form"
+          onSubmit={(e: FormEvent<HTMLFormElement>) => {
+            e.preventDefault();
+            if (!session?.orgId) return;
+            const fd = new FormData(e.currentTarget);
+            setError(null);
+            void upsertMaterial({
+              orgId: session.orgId,
+              name: String(fd.get("name") ?? ""),
+              category: String(fd.get("category") ?? "General"),
+              unit: String(fd.get("unit") ?? "unit"),
+              pageUrl: String(fd.get("url") ?? "") || undefined,
+            })
+              .then(() => {
+                setSaved(true);
+                e.currentTarget.reset();
+              })
+              .catch((err: Error) => setError(err.message));
+          }}
+        >
+          <label>
+            Material name
+            <input name="name" required placeholder="Cement 42.5R" />
+          </label>
+          <label>
+            Category
+            <input name="category" defaultValue="Aggregates" />
+          </label>
+          <label>
+            Unit
+            <input name="unit" defaultValue="bag" />
+          </label>
+          <label>
+            Public page URL
+            <input name="url" type="url" placeholder="https://…" />
+          </label>
+          <Button type="submit">
+            <Plus /> Add material
+          </Button>
+          {saved && (
+            <p className="saved-note">
+              <Check /> Material saved — use Re-check to refresh the page price.
+            </p>
+          )}
+          {error && <p className="form-error">{error}</p>}
+        </form>
+      </section>
       {materials.length === 0 ? (
         <EmptyState
           icon={RefreshCw}
           title="No tracked materials yet"
-          body="Add materials with a public page URL so Firecrawl can check live unit prices."
-          action={{ to: "/settings", label: "Open Settings" }}
+          body="Add a material above with a public page URL so Firecrawl can check live unit prices."
         />
       ) : (
         <div className="market-grid">
@@ -860,7 +918,9 @@ export function QuoteDetailPage({ id }: { id: string }) {
             <h3>Evidence</h3>
             {q.pageUrl ? (
               <div>
-                <span>{q.pageUrl}</span>
+                <a href={q.pageUrl} target="_blank" rel="noreferrer" className="evidence-url">
+                  {q.pageUrl}
+                </a>
                 <b>{money(q.market)}</b>
                 <small>Firecrawl extract</small>
               </div>
@@ -879,7 +939,7 @@ export function QuoteDetailPage({ id }: { id: string }) {
         <aside className="quote-side">
           <div>
             <span>OWNER</span>
-            <strong>{q.assignee}</strong>
+            <strong>{q.assignee || "Unassigned"}</strong>
             <div className="assign-row">
               {["Kojo", "Ama", "Esi"].map((p) => (
                 <button

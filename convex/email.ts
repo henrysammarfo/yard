@@ -1,11 +1,11 @@
 import { v } from "convex/values";
-import { internalMutation, internalQuery } from "./_generated/server";
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import { internal } from "./_generated/api";
-import { components } from "./_generated/api";
-import { AgentMail } from "@agentmail/convex";
 import { initialsFrom, logActivity, parseQuoteFromEmail } from "./lib/access";
-
-const agentmail = new AgentMail(components.agentmail);
 
 /** Resolve which org owns an AgentMail inbox. */
 export const orgForInbox = internalQuery({
@@ -126,24 +126,19 @@ export const onMessageReceived = internalMutation({
   },
 });
 
-export const replyWithCounter = internalMutation({
+export const markCountered = internalMutation({
   args: {
     quoteId: v.id("quotes"),
     text: v.string(),
   },
   handler: async (ctx, { quoteId, text }) => {
     const quote = await ctx.db.get(quoteId);
-    if (!quote?.agentmailInboxId || !quote.agentmailMessageId) {
-      throw new Error("Quote missing AgentMail identifiers");
-    }
-    await agentmail.replyToMessage(ctx, quote.agentmailInboxId, quote.agentmailMessageId, {
-      text,
-      labels: ["yard-counter"],
-    });
+    if (!quote) return;
     await ctx.db.patch(quoteId, {
       status: "countered",
       counterText: text,
       checkedAt: Date.now(),
+      draftError: undefined,
     });
     await logActivity(ctx, {
       orgId: quote.orgId,
@@ -152,5 +147,75 @@ export const replyWithCounter = internalMutation({
       type: "send",
       quoteId,
     });
+  },
+});
+
+/**
+ * Send counter via AgentMail HTTP from the parent deployment action
+ * (component actions cannot see parent AGENTMAIL_API_KEY env).
+ */
+export const sendCounterReply = internalAction({
+  args: {
+    quoteId: v.id("quotes"),
+    text: v.string(),
+  },
+  handler: async (ctx, { quoteId, text }) => {
+    const quote = await ctx.runQuery(internal.quotes.getInternal, { quoteId });
+    if (!quote?.agentmailInboxId || !quote.agentmailMessageId) {
+      await ctx.runMutation(internal.quotes.markCounterFailed, {
+        quoteId,
+        draftError: "Quote missing AgentMail identifiers",
+      });
+      return;
+    }
+
+    const apiKey = process.env.AGENTMAIL_API_KEY;
+    if (!apiKey) {
+      await ctx.runMutation(internal.quotes.markCounterFailed, {
+        quoteId,
+        draftError: "AGENTMAIL_API_KEY missing on deployment",
+      });
+      return;
+    }
+
+    const inboxId = encodeURIComponent(quote.agentmailInboxId);
+    const messageId = encodeURIComponent(quote.agentmailMessageId);
+    const url = `https://api.agentmail.to/v0/inboxes/${inboxId}/messages/${messageId}/reply`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text,
+        labels: ["yard-counter"],
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      await ctx.runMutation(internal.quotes.markCounterFailed, {
+        quoteId,
+        draftError: `AgentMail reply failed (${res.status}): ${body.slice(0, 200)}`,
+      });
+      return;
+    }
+
+    await ctx.runMutation(internal.email.markCountered, { quoteId, text });
+  },
+});
+
+/** Kept for compatibility — schedules sendCounterReply. */
+export const replyWithCounter = internalMutation({
+  args: {
+    quoteId: v.id("quotes"),
+    text: v.string(),
+  },
+  handler: async (ctx, { quoteId, text }) => {
+    await ctx.scheduler.runAfter(0, internal.email.sendCounterReply, {
+      quoteId,
+      text,
+    });
+    await ctx.db.patch(quoteId, { counterText: text });
   },
 });
