@@ -1,15 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { seoHead } from "@/lib/seo";
 import { TeamDashboardPage } from "@/components/yard/dashboard-pages";
 export const Route = createFileRoute("/workspace-team")({
-  head: () => ({
-    meta: [
-      { title: "Team & roles — YARD" },
-      { name: "description", content: "Manage workspace roles and assignments." },
-      { property: "og:title", content: "Team & roles — YARD" },
-      { property: "og:description", content: "Manage workspace roles and assignments." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      title: 'Team — YARD',
+      description: 'Roles and membership for your organisation.',
+      path: '/workspace-team',
+    }),
   component: TeamDashboardPage,
 });

@@ -1,18 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { seoHead } from "@/lib/seo";
 import { SettingsPage } from "@/components/yard/dashboard-pages";
 export const Route = createFileRoute("/settings")({
-  head: () => ({
-    meta: [
-      { title: "Settings — YARD" },
-      { name: "description", content: "Manage the yard workspace and integration readiness." },
-      { property: "og:title", content: "Settings — YARD" },
-      {
-        property: "og:description",
-        content: "Manage the yard workspace and integration readiness.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      title: 'Settings — YARD',
+      description: 'Inbox, integrations, and workspace profile.',
+      path: '/settings',
+    }),
   component: SettingsPage,
 });

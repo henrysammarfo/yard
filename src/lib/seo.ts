@@ -11,6 +11,8 @@ export function absoluteUrl(path = "/"): string {
   return `${SITE_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+const ASSET_V = "v3";
+
 export function seoHead({
   title,
   description,
@@ -46,10 +48,13 @@ export function seoHead({
     ],
     links: [
       { rel: "canonical", href: url },
-      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
-      { rel: "icon", href: "/favicon.ico", sizes: "any" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
-      { rel: "image_src", href: DEFAULT_ICON },
+      { rel: "icon", href: `/favicon-32.png?${ASSET_V}`, type: "image/png", sizes: "32x32" },
+      { rel: "icon", href: `/favicon-16.png?${ASSET_V}`, type: "image/png", sizes: "16x16" },
+      { rel: "shortcut icon", href: `/favicon.ico?${ASSET_V}` },
+      { rel: "icon", href: `/favicon.ico?${ASSET_V}`, sizes: "any" },
+      { rel: "icon", href: `/favicon.svg?${ASSET_V}`, type: "image/svg+xml" },
+      { rel: "apple-touch-icon", href: `/apple-touch-icon.png?${ASSET_V}`, sizes: "180x180" },
+      { rel: "image_src", href: `${DEFAULT_ICON}?${ASSET_V}` },
     ],
   };
 }

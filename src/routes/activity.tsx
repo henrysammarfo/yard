@@ -1,15 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { seoHead } from "@/lib/seo";
 import { ActivityPage } from "@/components/yard/dashboard-pages";
 export const Route = createFileRoute("/activity")({
-  head: () => ({
-    meta: [
-      { title: "Activity — YARD" },
-      { name: "description", content: "Operational audit trail for the YARD workspace." },
-      { property: "og:title", content: "Activity — YARD" },
-      { property: "og:description", content: "Operational audit trail for the YARD workspace." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      title: 'Activity — YARD',
+      description: 'Realtime audit trail for the workspace.',
+      path: '/activity',
+    }),
   component: ActivityPage,
 });

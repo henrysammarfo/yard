@@ -93,14 +93,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400;1,600&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
-      { rel: "icon", href: "/favicon-32.png", type: "image/png", sizes: "32x32" },
-      { rel: "icon", href: "/favicon-16.png", type: "image/png", sizes: "16x16" },
-      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
+      { rel: "icon", href: "/favicon-32.png?v=3", type: "image/png", sizes: "32x32" },
+      { rel: "icon", href: "/favicon-16.png?v=3", type: "image/png", sizes: "16x16" },
+      { rel: "shortcut icon", href: "/favicon.ico?v=3" },
+      { rel: "icon", href: "/favicon.ico?v=3", sizes: "any" },
+      { rel: "icon", href: "/favicon.svg?v=3", type: "image/svg+xml" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=3", sizes: "180x180" },
       { rel: "manifest", href: "/site.webmanifest" },
       { rel: "canonical", href: `${SITE_ORIGIN}/` },
-      { rel: "image_src", href: `${SITE_ORIGIN}/logo.png` },
+      { rel: "image_src", href: `${SITE_ORIGIN}/logo.png?v=2` },
     ],
   }),
   shellComponent: RootShell,
@@ -113,9 +114,12 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <link rel="icon" href="/favicon-32.png?v=3" type="image/png" sizes="32x32" />
+        <link rel="shortcut icon" href="/favicon.ico?v=3" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3" />
         <HeadContent />
         <meta name="theme-color" content="#111111" />
-        <link rel="mask-icon" href="/favicon.svg" color="#111111" />
+        <link rel="mask-icon" href="/favicon.svg?v=3" color="#111111" />
         <meta property="og:image:secure_url" content={`${SITE_ORIGIN}/og.png`} />
       </head>
       <body>

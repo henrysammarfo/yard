@@ -1,15 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { seoHead } from "@/lib/seo";
 import { ApprovalsPage } from "@/components/yard/dashboard-pages";
 export const Route = createFileRoute("/approvals")({
-  head: () => ({
-    meta: [
-      { title: "Approvals — YARD" },
-      { name: "description", content: "Review and approve pending procurement quotes." },
-      { property: "og:title", content: "Approvals — YARD" },
-      { property: "og:description", content: "Review and approve pending procurement quotes." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      title: 'Approvals — YARD',
+      description: 'Quotes waiting for a buying decision.',
+      path: '/approvals',
+    }),
   component: ApprovalsPage,
 });

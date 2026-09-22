@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { roleProfiles, toMutationStatus, useSession, type UiQuote } from "@/lib/yard-session";
 import { useQuoteActions, useYard } from "@/lib/yard-store";
 import { DashboardShell, Metric, Status } from "./dashboard-shell";
+import { EmptyState } from "./empty-state";
 
 const money = (n: number) =>
   Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—";
@@ -34,11 +35,12 @@ const variance = (q: UiQuote) => (q.market > 0 ? ((q.quoted - q.market) / q.mark
 function QuoteTable({ data }: { data: UiQuote[] }) {
   if (data.length === 0) {
     return (
-      <div className="empty-state">
-        <Search />
-        <h3>No quotes match this view.</h3>
-        <p>Clear the search or choose another filter. New AgentMail quotes appear live.</p>
-      </div>
+      <EmptyState
+        icon={Search}
+        title="No quotes in this view"
+        body="Clear the search or pick another filter. New AgentMail quotes appear here live."
+        action={{ to: "/settings", label: "Check inbox setup" }}
+      />
     );
   }
   return (
@@ -127,13 +129,13 @@ export function DashboardPage() {
         <Metric
           label="High-quote exposure"
           value={money(saved)}
-          note="Quoted above public page price"
+          note="Amount quoted above the public page price"
           icon={TrendingDown}
         />
         <Metric
           label="Live updates"
-          value="Convex"
-          note="Subscriptions, not localStorage"
+          value="On"
+          note="Convex realtime — not browser storage"
           icon={Clock3}
         />
       </div>
@@ -148,7 +150,16 @@ export function DashboardPage() {
               View all <ArrowRight />
             </Link>
           </div>
-          <QuoteTable data={review.slice(0, 3)} />
+          {review.length === 0 ? (
+            <EmptyState
+              icon={Inbox}
+              title="Nothing waiting yet"
+              body="When a supplier emails a quote, it lands here for review. Configure AgentMail in Settings to go live."
+              action={{ to: "/settings", label: "Open Settings" }}
+            />
+          ) : (
+            <QuoteTable data={review.slice(0, 3)} />
+          )}
         </article>
         <article className="dash-panel">
           <div className="panel-head">
@@ -169,7 +180,9 @@ export function DashboardPage() {
               </div>
             ))}
             {activity.length === 0 && (
-              <p className="empty-inline">No activity yet — inbound mail will land here.</p>
+              <p className="empty-inline">
+                No activity yet. Inbound mail and decisions will show up here in realtime.
+              </p>
             )}
           </div>
           <Link className="panel-link" to="/activity">
@@ -232,13 +245,12 @@ export function InboxPage() {
   return (
     <DashboardShell title="Inbox" eyebrow="MAIL INTAKE">
       {quotes.length === 0 ? (
-        <div className="empty-state">
-          <Mail />
-          <h3>Waiting for supplier mail.</h3>
-          <p>
-            Configure your AgentMail inbox in Settings. Inbound webhooks create live quote rows.
-          </p>
-        </div>
+        <EmptyState
+          icon={Mail}
+          title="Waiting for supplier mail"
+          body="Point AgentMail at this workspace in Settings. Inbound webhooks create live quote rows the moment a supplier emails you."
+          action={{ to: "/settings", label: "Configure AgentMail" }}
+        />
       ) : (
         <div className="inbox-layout">
           <aside>
@@ -317,11 +329,12 @@ export function ApprovalsPage() {
           </div>
         </div>
         {pending.length === 0 ? (
-          <div className="empty-state">
-            <Check />
-            <h3>Queue clear.</h3>
-            <p>Every quote has a decision. New supplier mail lands here automatically.</p>
-          </div>
+          <EmptyState
+            icon={Check}
+            title="Queue clear"
+            body="Every quote has a decision. New supplier mail lands here automatically."
+            action={{ to: "/inbox", label: "Go to Inbox" }}
+          />
         ) : (
           <div className="approval-list">
             {pending.map((q) => (
@@ -417,11 +430,12 @@ export function SuppliersPage() {
         </label>
       </div>
       {data.length === 0 ? (
-        <div className="empty-state">
-          <Search />
-          <h3>No suppliers yet.</h3>
-          <p>Suppliers appear as quotes arrive, or add them from an owner workflow.</p>
-        </div>
+        <EmptyState
+          icon={Search}
+          title="No suppliers yet"
+          body="Suppliers appear as quotes arrive. You can also add them from an owner workflow once mail is flowing."
+          action={{ to: "/inbox", label: "Open Inbox" }}
+        />
       ) : (
         <div className="supplier-grid">
           {data.map((s) => (
@@ -463,11 +477,12 @@ export function MaterialsPage() {
   return (
     <DashboardShell title="Market prices" eyebrow="PUBLIC EVIDENCE">
       {materials.length === 0 ? (
-        <div className="empty-state">
-          <RefreshCw />
-          <h3>No tracked materials yet.</h3>
-          <p>Add materials with a public page URL to run live Firecrawl checks.</p>
-        </div>
+        <EmptyState
+          icon={RefreshCw}
+          title="No tracked materials yet"
+          body="Add materials with a public page URL so Firecrawl can check live unit prices."
+          action={{ to: "/settings", label: "Open Settings" }}
+        />
       ) : (
         <div className="market-grid">
           {materials.map((m) => (
@@ -515,11 +530,12 @@ export function OrdersPage() {
           </Link>
         </div>
         {orders.length === 0 ? (
-          <div className="empty-state">
-            <PackageCheck />
-            <h3>No purchase orders yet.</h3>
-            <p>Approve a matched or reviewed quote to create a PO.</p>
-          </div>
+          <EmptyState
+            icon={PackageCheck}
+            title="No purchase orders yet"
+            body="Approve a matched or reviewed quote to create a purchase order."
+            action={{ to: "/approvals", label: "Review quotes" }}
+          />
         ) : (
           <div className="order-list">
             {orders.map((o) => (
@@ -551,11 +567,12 @@ export function ActivityPage() {
     <DashboardShell title="Activity" eyebrow="RECORD">
       <section className="timeline">
         {activity.length === 0 && (
-          <div className="empty-state">
-            <Activity />
-            <h3>No events yet.</h3>
-            <p>Mail, crawl, and approval events append here in order.</p>
-          </div>
+          <EmptyState
+            icon={Activity}
+            title="No events yet"
+            body="Mail, crawl, and approval events append here in order as the live loop runs."
+            action={{ to: "/settings", label: "Check integrations" }}
+          />
         )}
         {activity.map((a, i) => (
           <article key={a.time + a.title + i}>
@@ -792,13 +809,12 @@ export function QuoteDetailPage({ id }: { id: string }) {
   if (!q) {
     return (
       <DashboardShell title="Quote not found" eyebrow="QUOTE">
-        <div className="empty-state">
-          <Search />
-          <h3>That quote does not exist.</h3>
-          <Link className="button button--dark" to="/board">
-            Back to live board
-          </Link>
-        </div>
+        <EmptyState
+          icon={Search}
+          title="That quote does not exist"
+          body="It may have been removed, or the link is stale."
+          action={{ to: "/board", label: "Back to live board" }}
+        />
       </DashboardShell>
     );
   }
@@ -915,13 +931,12 @@ export function OrderDetailPage({ id }: { id: string }) {
   if (!o) {
     return (
       <DashboardShell title="Order not found" eyebrow="ORDER">
-        <div className="empty-state">
-          <Search />
-          <h3>That order does not exist.</h3>
-          <Link className="button button--dark" to="/orders">
-            Back to orders
-          </Link>
-        </div>
+        <EmptyState
+          icon={Search}
+          title="That order does not exist"
+          body="It may have been removed, or the link is stale."
+          action={{ to: "/orders", label: "Back to orders" }}
+        />
       </DashboardShell>
     );
   }
@@ -967,13 +982,12 @@ export function SupplierDetailPage({ id }: { id: string }) {
   if (!s) {
     return (
       <DashboardShell title="Supplier not found" eyebrow="SUPPLIER">
-        <div className="empty-state">
-          <Search />
-          <h3>Unknown supplier.</h3>
-          <Link className="button button--dark" to="/suppliers">
-            Back
-          </Link>
-        </div>
+        <EmptyState
+          icon={Search}
+          title="Unknown supplier"
+          body="That supplier record is missing from this workspace."
+          action={{ to: "/suppliers", label: "Back to suppliers" }}
+        />
       </DashboardShell>
     );
   }

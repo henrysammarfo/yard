@@ -100,7 +100,7 @@ export function AuroraAuthPage() {
   }
 
   return (
-    <main className="aurora-auth flex min-h-screen w-full bg-black p-2 text-white antialiased selection:bg-white/30 transition-all duration-500 lg:h-screen lg:overflow-hidden lg:p-4">
+    <main className="aurora-auth flex min-h-screen w-full bg-black p-2 text-white antialiased selection:bg-white/30 transition-all duration-500 lg:h-screen lg:p-4">
       {/* Left — hero video */}
       <section className="relative hidden h-full w-[52%] flex-col items-center justify-end overflow-hidden rounded-3xl px-12 pb-32 shadow-2xl lg:flex">
         <video
@@ -114,6 +114,7 @@ export function AuroraAuthPage() {
         >
           <source src={HERO_VIDEO} type="video/mp4" />
         </video>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/35" aria-hidden />
         <motion.div
           className="relative z-10 w-full max-w-xs space-y-8"
           variants={stagger}
@@ -128,7 +129,7 @@ export function AuroraAuthPage() {
             <h1 className="whitespace-nowrap text-4xl font-medium tracking-tight">
               Join YARD
             </h1>
-            <p className="px-4 text-sm leading-relaxed text-white/60">
+            <p className="px-4 text-sm leading-relaxed text-white/70">
               Follow these 3 quick phases to activate your buying workspace.
             </p>
           </motion.div>
@@ -141,21 +142,21 @@ export function AuroraAuthPage() {
       </section>
 
       {/* Right — form */}
-      <section className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-12 sm:px-12 lg:overflow-hidden lg:px-16 lg:py-6 xl:px-24">
+      <section className="flex flex-1 flex-col items-center overflow-y-auto px-4 py-10 sm:px-12 lg:justify-start lg:px-16 lg:py-8 xl:px-24">
         <motion.div
-          className="w-full max-w-xl space-y-8 sm:space-y-10 lg:space-y-6"
+          className="my-auto w-full max-w-xl space-y-6 sm:space-y-7"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <header className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-widest text-white/40 lg:hidden">
+          <header className="sticky top-0 z-10 -mx-1 space-y-2 bg-black/95 px-1 pb-3 backdrop-blur-sm">
+            <p className="text-xs font-medium uppercase tracking-widest text-white/55 lg:hidden">
               YARD
             </p>
             <h2 className="text-3xl font-medium tracking-tight">
               {mode === "signUp" ? "Create New Profile" : "Welcome back"}
             </h2>
-            <p className="text-sm text-white/40">
+            <p className="text-sm text-white/55">
               {mode === "signUp"
                 ? "Input your basic details to begin the journey."
                 : "Sign in with your work email to open the live board."}
@@ -181,7 +182,7 @@ export function AuroraAuthPage() {
 
           <div className="relative flex items-center">
             <div className="h-px w-full border-t border-white/10" />
-            <span className="absolute left-1/2 -translate-x-1/2 bg-black px-4 text-xs font-medium uppercase tracking-widest text-white/40">
+            <span className="absolute left-1/2 -translate-x-1/2 bg-black px-4 text-xs font-medium uppercase tracking-widest text-white/50">
               Or
             </span>
           </div>
@@ -200,7 +201,7 @@ export function AuroraAuthPage() {
                   />
                   <InputGroup
                     label="Last Name"
-                    placeholder="Buyer"
+                    placeholder="Mensah"
                     type="text"
                     value={lastName}
                     onChange={setLastName}
@@ -224,12 +225,12 @@ export function AuroraAuthPage() {
                         className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 transition ${
                           role === r
                             ? "border-white bg-white text-black"
-                            : "border-white/10 bg-brand-gray text-white hover:bg-white/5"
+                            : "border-white/15 bg-brand-gray text-white/90 hover:bg-white/5"
                         }`}
                       >
                         <input
                           type="radio"
-                          className="mt-1"
+                          className="mt-1 accent-white"
                           name="role"
                           checked={role === r}
                           onChange={() => setRole(r)}
@@ -237,7 +238,7 @@ export function AuroraAuthPage() {
                         <span>
                           <strong className="block text-sm">{roleProfiles[r].label}</strong>
                           <small
-                            className={`text-xs ${role === r ? "text-black/60" : "text-white/40"}`}
+                            className={`text-xs leading-snug ${role === r ? "text-black/65" : "text-white/60"}`}
                           >
                             {roleProfiles[r].copy}
                           </small>
@@ -260,10 +261,13 @@ export function AuroraAuthPage() {
             />
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-white">Password</label>
+              <label htmlFor="password" className="text-sm font-medium text-white">
+                Password
+              </label>
               <div className="relative">
                 <input
-                  className="h-11 w-full rounded-xl border-none bg-brand-gray px-4 pr-11 text-white placeholder:text-white/20 focus:ring-2 focus:ring-white/20 focus:outline-none"
+                  id="password"
+                  className="h-11 w-full rounded-xl border-none bg-brand-gray px-4 pr-11 text-white placeholder:text-white/55 focus:ring-2 focus:ring-white/25 focus:outline-none"
                   placeholder="••••••••"
                   type={showPassword ? "text" : "password"}
                   value={password}
@@ -274,14 +278,14 @@ export function AuroraAuthPage() {
                 />
                 <button
                   type="button"
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-white/40 hover:text-white"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-white/55 hover:text-white"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
-              <p className="text-[11px] text-white/35">Requires at least 8 symbols.</p>
+              <p className="text-[11px] text-white/50">Requires at least 8 symbols.</p>
             </div>
 
             {(error || socialNote) && (
@@ -303,7 +307,7 @@ export function AuroraAuthPage() {
             </button>
           </form>
 
-          <p className="text-center text-sm text-white/45">
+          <p className="text-center text-sm text-white/55">
             {mode === "signUp" ? (
               <>
                 Member of the team?{" "}
@@ -337,8 +341,8 @@ export function AuroraAuthPage() {
             )}
           </p>
 
-          <p className="text-center text-xs text-white/25">
-            <Link to="/" className="hover:text-white/50">
+          <p className="text-center text-xs text-white/40">
+            <Link to="/" className="hover:text-white/60">
               ← Back to YARD
             </Link>
           </p>
@@ -362,12 +366,12 @@ function StepItem({
       className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 ${
         active
           ? "border border-white bg-white text-black"
-          : "border-none bg-brand-gray text-white"
+          : "border border-white/10 bg-black/45 text-white/75"
       }`}
     >
       <span
         className={`flex size-7 items-center justify-center rounded-full text-xs font-semibold ${
-          active ? "bg-black text-white" : "bg-white/10 text-white/40"
+          active ? "bg-black text-white" : "bg-white/15 text-white/75"
         }`}
       >
         {number}
@@ -415,11 +419,15 @@ function InputGroup({
   required?: boolean;
   autoComplete?: string;
 }) {
+  const id = label.toLowerCase().replace(/\s+/g, "-");
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-white">{label}</label>
+      <label htmlFor={id} className="text-sm font-medium text-white">
+        {label}
+      </label>
       <input
-        className="h-11 w-full rounded-xl border-none bg-brand-gray px-4 text-white placeholder:text-white/20 focus:ring-2 focus:ring-white/20 focus:outline-none"
+        id={id}
+        className="h-11 w-full rounded-xl border-none bg-brand-gray px-4 text-white placeholder:text-white/55 focus:ring-2 focus:ring-white/25 focus:outline-none"
         placeholder={placeholder}
         type={type}
         value={value}

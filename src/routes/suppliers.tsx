@@ -1,15 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { seoHead } from "@/lib/seo";
 import { SuppliersPage } from "@/components/yard/dashboard-pages";
 export const Route = createFileRoute("/suppliers")({
-  head: () => ({
-    meta: [
-      { title: "Suppliers — YARD" },
-      { name: "description", content: "Supplier directory and procurement performance." },
-      { property: "og:title", content: "Suppliers — YARD" },
-      { property: "og:description", content: "Supplier directory and procurement performance." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      title: 'Suppliers — YARD',
+      description: 'Supplier directory for your workspace.',
+      path: '/suppliers',
+    }),
   component: SuppliersPage,
 });

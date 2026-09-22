@@ -1,15 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { seoHead } from "@/lib/seo";
 import { MaterialsPage } from "@/components/yard/dashboard-pages";
 export const Route = createFileRoute("/materials")({
-  head: () => ({
-    meta: [
-      { title: "Market prices — YARD" },
-      { name: "description", content: "Current market evidence for tracked materials." },
-      { property: "og:title", content: "Market prices — YARD" },
-      { property: "og:description", content: "Current market evidence for tracked materials." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      title: 'Materials — YARD',
+      description: 'Materials catalog for quote matching.',
+      path: '/materials',
+    }),
   component: MaterialsPage,
 });
